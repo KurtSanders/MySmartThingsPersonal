@@ -19,9 +19,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 definition(
-    name: "Mail Arrived",
+    name: "Mail-Arrived",
     namespace: "SanderSoft",
-    author: "kurtsanders",
+    author: "KurtSanders",
     description: "Send a text when mail arrives in your mailbox using a Contact Sensor on your mailbox door.",
     category: "Convenience",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Meta/mail_contact.png",
