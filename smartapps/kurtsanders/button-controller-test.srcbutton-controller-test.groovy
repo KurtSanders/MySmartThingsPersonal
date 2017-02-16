@@ -5,8 +5,8 @@
  *	Date: 2015-09-14  Added virtual buttons
  */
 definition(
-    name: "Button Controller+",
-    namespace: "smartthings",
+    name: "Button Controller+ Test",
+    namespace: "kurtsanders",
     author: "SmartThings",
     description: "Control devices with buttons like the Aeon Labs Minimote",
     category: "Convenience",
