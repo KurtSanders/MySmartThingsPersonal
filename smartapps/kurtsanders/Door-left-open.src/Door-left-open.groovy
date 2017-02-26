@@ -9,7 +9,7 @@
 definition(
     name: "Door left open",
     namespace: "kurtsanders",
-    author: "Kurt@KurtSanders.com",
+    author: "Kurt Sanders",
     category: "Safety & Security",
     description: "Notify when something is left open",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
