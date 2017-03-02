@@ -56,7 +56,7 @@ def initialize() {
 }
 
 mappings {
-	path("/sensors/") {
+	path("/sensors/:doorname/:state") {
       action: [
         GET: "updateSensors"
     ]
@@ -64,11 +64,12 @@ mappings {
 }
 
 def updateSensors() {
-	def command 	= params.command
-    def doorname	= command.tokenize(":")[0]
-    def state		= command.tokenize(":")[1]
-	log.debug 	"updateSensors: command ${command} -> doorname ${doorname}  -> state ${state}"
-    contacts.each {
+	def doorname 	= params.doorname
+	def state 		= params.state
+	log.debug 	"updateSensors(): doorname=${doorname}"
+	log.debug 	"updateSensors(): state=${state}"
+
+	contacts.each {
 //    	log.debug "it.name = ${it.name} -> ${doorname}"
     	if(it.name == doorname)
         	{
