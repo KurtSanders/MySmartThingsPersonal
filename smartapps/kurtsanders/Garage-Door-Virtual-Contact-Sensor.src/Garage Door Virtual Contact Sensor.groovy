@@ -13,6 +13,7 @@ definition(
     iconX3Url: "https://raw.githubusercontent.com/brbeaird/SmartThings_MyQ/master/icons/myq@3x.png",
     oauth: true
 )
+import java.text.SimpleDateFormat;
 
 preferences {
   page(name:"mainPage")
@@ -47,6 +48,7 @@ def updated() {
     log.debug "smartAppURL = \"${state.endpointURL}\""
     log.debug "The API has been setup. Please enter the following two lines into the Garage Door Virtual Contact Sensor App Python script."
     log.debug "##########################################################################################"
+    log.debug "Recipients configured: $recipients"
 
 	unsubscribe()
 	initialize()
@@ -69,11 +71,24 @@ def updateSensors() {
 	log.debug 	"updateSensors(): doorname=${doorname}"
 	log.debug 	"updateSensors(): state=${state}"
 
+	Date now = new Date()
+//  SimpleDateFormat timestamp = new SimpleDateFormat("EEE dd hh:mm:ss a");
+   	def timeString = now.format("EEE MM/dd hh:mm:ss a", location.timeZone) 
+
 	contacts.each {
-//    	log.debug "it.name = ${it.name} -> ${doorname}"
     	if(it.name == doorname)
         	{
 			log.debug "Found contact ${it.displayName} with id ${it.id} with deviceNetworkId ${it.deviceNetworkId} with current value ${it.currentContact}"
+            def message = "The ${doorname} is ${state} at ${timeString}!"
+            if (location.contactBookEnabled && recipients) {
+                log.debug "Contact book enabled!"
+                sendNotificationToContacts(message, recipients)
+            } else {
+                log.debug "Contact book not enabled"
+                if (phone) {
+                    sendSms(phone, message)
+                }
+            }
             def thecontact = it.deviceNetworkId
             def contact = contacts.find { it.deviceNetworkId == thecontact }
                 if (contact) {
@@ -101,7 +116,13 @@ private mainPage() {
         section("Device Setup") {
         href name: "devicesPageLink", title: "Select Devices", description: "", page: "devicesPage"
         }
-	}
+        section("Send Notifications?") {
+        input("recipients", "contact", title: "Send notifications to") {
+            input "phone", "phone", title: "Warn with text message (optional)",
+                description: "Phone Number", required: false
+        }
+      }
+   }
 }
 
 
