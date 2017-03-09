@@ -6,7 +6,7 @@ definition(
     name: "Garage Door Virtual Contact Sensor",
     namespace: "kurtsanders",
     author: "Kurt@KurtSanders.com",
-    description: "SanderSoft: Garage Door Virtual Contact Sensor",
+    description: "Garage Door Virtual Contact Sensor",
     category: "My Apps",
     iconUrl:   "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon60.png",
     iconX2Url: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon120.png",
@@ -85,8 +85,8 @@ def getStatus() {
 
 def updateSensors() {
 	def doorname 	= params.doorname
-	def state 		= params.state
-    def timestamp	= params.timestamp
+	def state 	= params.state
+    	def timestamp	= params.timestamp
 	log.debug 	"updateSensors(): doorname=${doorname}"
 	log.debug 	"updateSensors(): state=${state}"
 	log.debug 	"updateSensors(): timestamp=${timestamp}"
