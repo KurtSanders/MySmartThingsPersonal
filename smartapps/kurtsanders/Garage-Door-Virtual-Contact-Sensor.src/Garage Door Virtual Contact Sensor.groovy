@@ -8,9 +8,9 @@ definition(
     author: "Kurt@KurtSanders.com",
     description: "SanderSoft: Garage Door Virtual Contact Sensor",
     category: "My Apps",
-    iconUrl:   "https://raw.githubusercontent.com/brbeaird/SmartThings_MyQ/master/icons/myq.png",
-    iconX2Url: "https://raw.githubusercontent.com/brbeaird/SmartThings_MyQ/master/icons/myq@2x.png",
-    iconX3Url: "https://raw.githubusercontent.com/brbeaird/SmartThings_MyQ/master/icons/myq@3x.png",
+    iconUrl:   "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon60.png",
+    iconX2Url: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon120.png",
+    iconX3Url: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon120.png",
     oauth: true
 )
 import java.text.SimpleDateFormat;
@@ -58,30 +58,54 @@ def initialize() {
 }
 
 mappings {
-	path("/sensors/:doorname/:state") {
+	path("/sensors/:doorname/:state/:timestamp") {
       action: [
         GET: "updateSensors"
     ]
   }
+	path("/getStatus/") {
+      action: [
+        GET: "getStatus"
+    ]
+  }
 }
+
+def getStatus() {
+	log.debug "getStatus() called"
+	def contactData = []
+    contacts.each {
+        contactData << [name: it.displayName, value: it.currentContact];
+    }
+    log.debug "contactData: ${contactData}"
+	def resp = [ "Contact Sensors" : contactData]
+    log.debug "getStatus complete: ${resp}"
+	return resp
+}
+
 
 def updateSensors() {
 	def doorname 	= params.doorname
 	def state 		= params.state
+    def timestamp	= params.timestamp
 	log.debug 	"updateSensors(): doorname=${doorname}"
 	log.debug 	"updateSensors(): state=${state}"
+	log.debug 	"updateSensors(): timestamp=${timestamp}"
 
-	Date now = new Date()
-//  SimpleDateFormat timestamp = new SimpleDateFormat("EEE dd hh:mm:ss a");
-   	def timeString = now.format("EEE MM/dd hh:mm:ss a", location.timeZone) 
+//	Date now = new Date()
+//  def timeString = now.format("EEE MM/dd hh:mm:ss a", location.timeZone) 
 
 	contacts.each {
     	if(it.name == doorname)
         	{
-			log.debug "Found contact ${it.displayName} with id ${it.id} with deviceNetworkId ${it.deviceNetworkId} with current value ${it.currentContact}"
-            def message = "The ${doorname} is ${state} at ${timeString}!"
+			log.debug "Found contact sensor ${it.displayName} with deviceNetworkId ${it.deviceNetworkId} and current value ${it.currentContact}"
+            if (it.currentContact == state) {
+            	log.debug "Ignoring Update Request: The ${doorname} is already in state ${state}"
+                return
+            }
+            
+            def message = "The ${doorname} just ${state} at ${timestamp}!"
             if (location.contactBookEnabled && recipients) {
-                log.debug "Contact book enabled!"
+                log.debug "${message}"
                 sendNotificationToContacts(message, recipients)
             } else {
                 log.debug "Contact book not enabled"
