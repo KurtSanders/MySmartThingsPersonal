@@ -4,7 +4,7 @@
 
 definition(
     name: "Garage Door Virtual Contact Sensor",
-    namespace: "SanderSoft",
+    namespace: "kurtsanders",
     author: "Kurt@KurtSanders.com",
     description: "SanderSoft: Garage Door Virtual Contact Sensor",
     category: "My Apps",
