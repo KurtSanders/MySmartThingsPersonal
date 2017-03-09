@@ -1,7 +1,7 @@
 /* Virtual Contact Sensor for Garage Doors */
 
 metadata {
-    definition (name: "VirtualContactSensorGarage", namespace: "KurtSanders", author: "kurt@kurtsanders.com") {
+    definition (name: "VirtualContactSensorGarage", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
         capability "Contact Sensor"
         capability "Refresh"
         capability "Polling"
