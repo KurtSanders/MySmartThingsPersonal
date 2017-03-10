@@ -8,9 +8,10 @@ definition(
     author: "Kurt@KurtSanders.com",
     description: "Garage Door Virtual Contact Sensor",
     category: "My Apps",
-    iconUrl:   "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon60.png",
-    iconX2Url: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon120.png",
-    iconX3Url: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/Garage-Door-Virtual-Contact-Sensor.src/myq-icon120.png",
+    iconUrl:   "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/garage-door-virtual-contact-sensor.src/myq-icon60.png",
+    iconX2Url: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/garage-door-virtual-contact-sensor.src/myq-icon120.png",
+    iconX3Url: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/garage-door-virtual-contact-sensor.src/myq-icon120.png",
+	
     oauth: true
 )
 import java.text.SimpleDateFormat;
