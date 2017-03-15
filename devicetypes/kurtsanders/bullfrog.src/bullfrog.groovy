@@ -100,6 +100,7 @@ metadata {
 
 def installed() {
 	log.debug "Installed: Begin..."
+    /*
 	sendEvent(name: "device.spaTemp"   , value: 100)
 	sendEvent(name: "device.statusText", value: "Connected.")
 	sendEvent(name: "device.spaPump1"	, value: "Off")
@@ -107,6 +108,7 @@ def installed() {
 	sendEvent(name: "device.ledLights"	, value: "Off")
 	sendEvent(name: "device.modeState"	, value: "Ready")
     sendEvent(name: "device.heatMode"	, value: "On")
+    */
 	log.debug "Installed: End..."
 }
 
@@ -156,8 +158,8 @@ def getStatus() {
         try {
             httpGet(params) 
             { resp -> 
-            log.info "response data: ${resp.data}"
-        	devID = resp.data.items.devConnectwareId.get(0)
+//            log.info "response data: ${resp.data}"
+        	devID = resp.data.items.devConnectwareId?.get(0)
             log.info "devID = ${devID}"
 			if(resp.status == 200) {
                 log.debug "HttpGet Request was OK"
@@ -172,5 +174,55 @@ def getStatus() {
         {
             log.debug e
         }
+
+		log.debug "Web_postdata: Start"
+        def Web_idigi_post  = "https://developer.idigi.com/ws/sci"
+        def Web_postdata 	= '<sci_request version="1.0"><file_system cache="false" syncTimeout="15">\
+        <targets><device id="' + "${devID}" + '"/></targets><commands><get_file path="PanelUpdate.txt"/>\
+        <get_file path="DeviceConfiguration.txt"/></commands></file_system></sci_request>'
+        
+        params = [
+            'uri'			: Web_idigi_post,
+            'headers'		: header,
+			'body'			: Web_postdata	
+			]
+            log.debug "Start httpGet ============="
+            try {
+                httpPost(params) 
+                { resp -> 
+				if(resp.status == 200) {
+                    log.debug "HttpGet Request was OK"
+                    sendEvent(name: "device.statusText", value: "Connected.")
+                    log.info "response data: ${resp.data}"
+                    def B64encoded = resp.data
+                    def byte[] B64decoded = B64encoded.decodeBase64()
+                    log.info "decoded: ${B64decoded}"
+                    def hexstring = B64decoded.encodeHex()
+                    log.info "hexstring: ${hexstring}"
+					def setTemp 	= B64decoded.getAt(24)
+					def ledState 	= B64decoded.getAt(18)
+                    if (B64decoded[18]>0) { 
+                    	log.info "LED On"
+                    }
+                    else {
+                    	log.info "LED Off"
+                    }
+					log.debug "setTemp: ${setTemp}"
+					log.debug "ledState: ${ledState}"
+//                    log.info "Set Temp: ${hexstring.get(24)}"
+                    }
+                else {
+                    log.error "HttpGet Request got http status ${resp.status}"
+                    sendEvent(name: "device.statusText", value: "Spa Error: Device Not Connected.")
+                    return 
+                    }
+                }
+            }    
+            catch (Exception e) 
+            {
+                log.debug e
+            }
         log.debug "getStatus(): End"
+        
 	}
+    
