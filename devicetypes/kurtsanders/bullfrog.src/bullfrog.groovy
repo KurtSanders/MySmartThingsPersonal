@@ -13,6 +13,9 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
+ 
+def devID_old = "00000000-00000000-001527FF-FF09818B"
+
 metadata {
 	definition (name: "bullfrog", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
 		capability "Actuator"
@@ -96,6 +99,7 @@ metadata {
 }
 
 def installed() {
+	log.debug "Installed: Begin..."
 	sendEvent(name: "device.spaTemp"   , value: 100)
 	sendEvent(name: "device.statusText", value: "Connected.")
 	sendEvent(name: "device.spaPump1"	, value: "Off")
@@ -103,7 +107,7 @@ def installed() {
 	sendEvent(name: "device.ledLights"	, value: "Off")
 	sendEvent(name: "device.modeState"	, value: "Ready")
     sendEvent(name: "device.heatMode"	, value: "On")
-
+	log.debug "Installed: End..."
 }
 
 def parse(String description) {
@@ -119,15 +123,54 @@ def setMode(state) {
 def on() {
 	log.debug "turningOn"
 	sendEvent(name: "switch", value: "on")
+    getStatus()
 }
 
 def off() {
 	log.debug "turningOff"
 	sendEvent(name: "switch", value: "off")
+    getStatus()
 }
 
 def refresh() {
     log.trace("--- handler.refresh")
-    installed()
-    return
+    getStatus()
+	return
 }
+
+def getStatus() {
+	log.debug "getStatus(): Begin"
+    def devID = " "
+    def url   = "https://my.idigi.com/ws/DeviceCore/.json?condition=dpGlobalIp='174.101.169.159'"
+    def header = [
+    'UserAgent': 'Spa / 48 CFNetwork / 758.5.3 Darwin / 15.6.0', 
+    'Cookie': 'JSESSIONID = BC58572FF42D65B183B0318CF3B69470; BIGipServerAWS - DC - CC - Pool - 80 = 3959758764.20480.0000', 
+    'Authorization': 'Basic QmFsYm9hV2F0ZXJJT1NBcHA6azJuVXBSOHIh'
+    ]
+    def params = [
+        'uri'			: url,
+        'headers'		: header,
+        'contentType'	: 'application/json'
+    ]
+        log.debug "Start httpGet ============="
+        try {
+            httpGet(params) 
+            { resp -> 
+            log.info "response data: ${resp.data}"
+        	devID = resp.data.items.devConnectwareId.get(0)
+            log.info "devID = ${devID}"
+			if(resp.status == 200) {
+                log.debug "HttpGet Request was OK"
+                }
+            else {
+                log.error "HttpGet Request got http status ${resp.status}"
+                return 
+        		}
+            }
+        }    
+        catch (Exception e) 
+        {
+            log.debug e
+        }
+        log.debug "getStatus(): End"
+	}
