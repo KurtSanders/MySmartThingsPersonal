@@ -62,11 +62,11 @@ metadata {
                 ]
             )
         }
-        valueTile("spaSetTemp", "device.spaSetTemp", width: 2, height: 1) {
+        valueTile("spaSetTemp", "device.spaSetTemp", width: 2, height: 2) {
             state("spaSetTemp", label:'${currentValue}')
         }
  		standardTile("spaPump1", "device.spaPump1", inactiveLabel: false,
-			decoration: "flat", width: 2, height: 1,) {
+			decoration: "flat", width: 2, height: 2,) {
 			state "Low", label: '${currentValue}', 
 				icon: "st.valves.water.open", backgroundColor: yellowColor
 			state "High", label: '${currentValue}', 
@@ -75,7 +75,7 @@ metadata {
 				icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
  		standardTile("spaPump2", "device.spaPump2", inactiveLabel: false,
-			decoration: "flat", width: 2, height: 1,) {
+			decoration: "flat", width: 2, height: 2,) {
 			state "Low", label: '${currentValue}', 
 				icon: "st.valves.water.open", backgroundColor: yellowColor
 			state "High", label: '${currentValue}', 
@@ -93,22 +93,22 @@ metadata {
  		standardTile("modeState", "device.modeState", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "Rest", label: '${currentValue}', 
-				icon: "st.thermostat.fan-circulate", backgroundColor: fuchsiaColor
+				icon: "st.Kids.kids20", backgroundColor: fuchsiaColor
 			state "Ready", label: '${currentValue}', 
-				icon: "st.thermostat.fan-circulate", backgroundColor: greenColor
+				icon: "st.Kids.kids20", backgroundColor: greenColor
 			state "Ready in Rest", label: '${currentValue}', 
-				icon: "st.thermostat.fan-circulate", backgroundColor: yellowColor
+				icon: "st.Kids.kids20", backgroundColor: yellowColor
 			state "Off", label: '${currentValue}', 
-				icon: "st.thermostat.fan-circulate", backgroundColor: whiteColor
+				icon: "st.Kids.kids20", backgroundColor: whiteColor
 		}
  		standardTile("heatMode", "device.heatMode", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
-			state "On", label: '${currentValue}', 
+			state "On", label: '', 
 				icon: "st.thermostat.heat", backgroundColor: redColor
-			state "Off", label: '${currentValue}', 
-				icon: "st.thermostat.heat", backgroundColor: whiteColor
+			state "Off", label: '', 
+				icon: "st.thermostat.heating-cooling-off", backgroundColor: whiteColor
 		}
-        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 1) {
+        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         
@@ -146,8 +146,9 @@ def refresh() {
 }
 
 def updateBullfrogStatus() {
-    def devID 	= "00000000-00000000-001527FF-FF09818B"
-    def ip		= "174.101.169.159"
+	def hostName 	= "kurtsanders.mynetgear.com"
+	def ipAddress 	= convertHostnameToIPAddress(hostName)
+    def devID 		= "00000000-00000000-001527FF-FF09818B"
     def header = [
         'UserAgent': 'Spa / 48 CFNetwork / 758.5.3 Darwin / 15.6.0', 
         'Cookie': 'JSESSIONID = BC58572FF42D65B183B0318CF3B69470; BIGipServerAWS - DC - CC - Pool - 80 = 3959758764.20480.0000', 
@@ -157,7 +158,7 @@ def updateBullfrogStatus() {
     def skip_getDevId = true
 
     if (skip_getDevId==false) {
-        devID = getDevId(ip, header)
+        devID = getDevId(ipAddress, header)
         if (devID == false) {
             return
         }
@@ -170,6 +171,34 @@ def updateBullfrogStatus() {
 		return
     }
 	decodeBullfrogB64Data(B64decoded)
+}
+
+private String convertHostnameToIPAddress(hostname) {
+    def params = [
+        uri: "http://dns.google.com/resolve?name=" + hostname,
+        contentType: 'application/json'
+    ]
+    def retVal = null
+    try {
+        retVal = httpGet(params) { response ->
+            log.trace "Request was successful, data=$response.data, status=$response.status"
+            //log.trace "Result Status : ${response.data?.Status}"
+            if (response.data?.Status == 0) { // Success
+                for (answer in response.data?.Answer) { // Loop through results looking for the first IP address returned otherwise it's redirects
+//                    log.trace "Processing response: ${answer}"
+                    log.trace "Hostname ${answer?.name} has IP Address ${answer?.data}"
+                    return answer?.data // We're done here (if there are more ignore it, we'll use the first IP address returned)
+                }
+            } else {
+                log.warn "DNS unable to resolve hostname ${response.data?.Question[0]?.name}, Error: ${response.data?.Comment}"
+            }
+        }
+    } catch (Exception e) {
+        log.warn("Unable to convert hostname to IP Address, Error: $e")
+    }
+
+    //log.trace "Returning IP $retVal for Hostname $hostname"
+    return retVal
 }
 
 def getDevId(p,h) {
@@ -213,7 +242,7 @@ def byte[] getOnlineData(d, h) {
     def header 		= h
     def byte[] B64decoded
     Date now = new Date()
-    def timeString = now.format("EEE MM/dd hh:mm:ss a", location.timeZone)
+    def timeString = now.format("EEE MM/dd h:mm a", location.timeZone)
     log.debug "timeString: ${timeString}"
 
     def Web_idigi_post  = "https://developer.idigi.com/ws/sci"
