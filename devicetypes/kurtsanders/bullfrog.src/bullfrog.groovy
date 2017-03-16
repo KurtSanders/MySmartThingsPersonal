@@ -15,6 +15,17 @@
  */
 import java.text.SimpleDateFormat; 
 
+def redColor 		= "#FF0000"
+def whiteColor 		= "#FFFFFF"
+def grayColor		= "#808080"
+def silverColor 	= "#C0C0C0"
+def yellowColor 	= "#FFFF00"
+def greenColor 		= "#008000"
+def blueColor 		= "#0000FF"
+def purpleColor 	= "#800080"
+def fuchsiaColor 	= "#FF00FF"
+def navyColor 		= "#000080"
+
 metadata {
 	definition (name: "bullfrog", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
 		capability "Actuator"
@@ -28,75 +39,81 @@ metadata {
 	tiles(scale: 2) {
 		multiAttributeTile(name:"main", type:"generic", width:6, height:4) {
 			tileAttribute("device.switch", key: "PRIMARY_CONTROL") {
-				attributeState "on", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:"#FF0000", nextState:"turningOff"
-				attributeState "off", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:"#0400ff", nextState:"turningOn"
-				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:"#79b821", nextState:"turningOff"
-				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:"#ffff00", nextState:"turningOn"
+				attributeState "on", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:greenColor		, nextState:"turningOff"
+				attributeState "off", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:whiteColor	, nextState:"turningOn"
+				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:yellowColor	, nextState:"turningOff"
+				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:yellowColor, nextState:"turningOn"
 			}
  			tileAttribute("device.statusText", key: "SECONDARY_CONTROL") {
-				attributeState "statusText", label: '${currentValue}', backgroundColor:"#79b821", defaultState: true
+				attributeState "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
 			}         
 		}
 
         valueTile("spaCurTemp", "device.spaCurTemp", width: 2, height: 2) {
             state("spaCurTemp", label:'${currentValue}°F',
                 backgroundColors:[
-                    [value: 50,  color: "#153591"],
-                    [value: 98,  color: "#1e9cbb"],
-                    [value: 99,  color: "#90d2a7"],
-                    [value: 100, color: "#44b621"],
-                    [value: 101, color: "#f1d801"],
-                    [value: 102, color: "#d04e00"],
-                    [value: 103, color: "#bc2323"]
+                    [value: 50,  color: blueColor],
+                    [value: 98,  color: navyColor],
+                    [value: 99,  color: greenColor],
+                    [value: 100, color: fuchsiaColor],
+                    [value: 101, color: purpleColor],
+                    [value: 102, color: yellowColor],
+                    [value: 103, color: redColor]
                 ]
             )
         }
-        valueTile("spaSetTemp", "device.spaSetTemp", width: 2, height: 2) {
+        valueTile("spaSetTemp", "device.spaSetTemp", width: 2, height: 1) {
             state("spaSetTemp", label:'${currentValue}')
         }
  		standardTile("spaPump1", "device.spaPump1", inactiveLabel: false,
-			decoration: "flat", width: 2, height: 2,) {
-			state "On", label: '${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: "#FF0000"
+			decoration: "flat", width: 2, height: 1,) {
+			state "Low", label: '${currentValue}', 
+				icon: "st.valves.water.open", backgroundColor: yellowColor
+			state "High", label: '${currentValue}', 
+				icon: "st.valves.water.open", backgroundColor: greenColor
 			state "Off", label: '${currentValue}', 
-				icon: "st.valves.water.closed", backgroundColor: "#ffffff"
+				icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
  		standardTile("spaPump2", "device.spaPump2", inactiveLabel: false,
-			decoration: "flat", width: 2, height: 2,) {
-			state "On", label: '${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: "#FF0000"
+			decoration: "flat", width: 2, height: 1,) {
+			state "Low", label: '${currentValue}', 
+				icon: "st.valves.water.open", backgroundColor: yellowColor
+			state "High", label: '${currentValue}', 
+				icon: "st.valves.water.open", backgroundColor: greenColor
 			state "Off", label: '${currentValue}', 
-				icon: "st.valves.water.closed", backgroundColor: "#ffffff"
+				icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
  		standardTile("ledLights", "device.ledLights", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "On", label: '${currentValue}', 
-				icon: "st.Lighting.light11", backgroundColor: "#FF0000"
+				icon: "st.Lighting.light11", backgroundColor: yellowColor
 			state "Off", label: '${currentValue}', 
-				icon: "st.Lighting.light11", backgroundColor: "#ffffff"
+				icon: "st.Lighting.light11", backgroundColor: whiteColor
 		}
  		standardTile("modeState", "device.modeState", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "Rest", label: '${currentValue}', 
-				icon: "st.thermostat.fan-circulate", backgroundColor: "#C1C2C3"
+				icon: "st.thermostat.fan-circulate", backgroundColor: fuchsiaColor
 			state "Ready", label: '${currentValue}', 
-				icon: "st.thermostat.fan-circulate", backgroundColor: "#008000"
+				icon: "st.thermostat.fan-circulate", backgroundColor: greenColor
+			state "Ready in Rest", label: '${currentValue}', 
+				icon: "st.thermostat.fan-circulate", backgroundColor: yellowColor
 			state "Off", label: '${currentValue}', 
-				icon: "st.thermostat.fan-circulate", backgroundColor: "#0000FF"
+				icon: "st.thermostat.fan-circulate", backgroundColor: whiteColor
 		}
  		standardTile("heatMode", "device.heatMode", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "On", label: '${currentValue}', 
-				icon: "st.thermostat.heat", backgroundColor: "#FF0000"
+				icon: "st.thermostat.heat", backgroundColor: redColor
 			state "Off", label: '${currentValue}', 
-				icon: "st.thermostat.heat", backgroundColor: "#ffffff"
+				icon: "st.thermostat.heat", backgroundColor: whiteColor
 		}
-        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 6, height: 2) {
+        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 1) {
             state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         
 		main(["main"])
-		details(["main", "spaSetTemp", "spaCurTemp", "modeState", "heatMode", "spaPump1", "spaPump2", "ledLights", "refresh"])
+		details(["main", "spaCurTemp", "modeState", "heatMode", "ledLights","spaPump1", "spaPump2", "spaSetTemp",  "refresh"])
 	}
 }
 
@@ -107,10 +124,6 @@ def installed() {
 
 def parse(String description) {
 	// This is a simulated device. No incoming data to parse.
-}
-
-def setMode(state) {
-	log.debug "setMode(${state}): Entering"
 }
 
 def on() {
@@ -261,7 +274,7 @@ def decodeBullfrogB64Data(byte[] d) {
         break
         case 2:
         log.info "Mode: Ready in Rest"
-        sendEvent(name: "modeState", value: 'Ready in Rest')
+        sendEvent(name: "modeState", value: 'Ready in\nRest')
         break
         default :
         log.info "Mode: Unknown"
@@ -271,6 +284,60 @@ def decodeBullfrogB64Data(byte[] d) {
     offset = 12
     log.debug "setCurTemp: ${B64decoded[offset]}"
     sendEvent(name: "spaCurTemp", value: B64decoded[offset])
+
+    offset = 15
+    switch (B64decoded[offset]) {
+        case 0:
+        log.info "Pump1: Off, Pump2: Off"
+        sendEvent(name: "spaPump1", value: 'Off')
+        sendEvent(name: "spaPump2", value: 'Off')
+        break
+        case 1:
+        log.info "Pump1: Low, Pump2: Off"
+        sendEvent(name: "spaPump1", value: 'Low')
+        sendEvent(name: "spaPump2", value: 'Off')
+        break
+        case 2:
+        log.info "Pump1: High, Pump2: Off"
+        sendEvent(name: "spaPump1", value: 'High')
+        sendEvent(name: "spaPump2", value: 'Off')
+        break
+        case 4:
+        log.info "Pump1: Off, Pump2: Low"
+        sendEvent(name: "spaPump1", value: 'Off')
+        sendEvent(name: "spaPump2", value: 'Low')
+        break
+        case 5:
+        log.info "Pump1: Low, Pump2: Low"
+        sendEvent(name: "spaPump1", value: 'Low')
+        sendEvent(name: "spaPump2", value: 'Low')
+        break
+        case 6:
+        log.info "Pump1: High, Pump2: Low"
+        sendEvent(name: "spaPump1", value: 'High')
+        sendEvent(name: "spaPump2", value: 'Low')
+        break
+        case 8:
+        log.info "Pump1: Off, Pump2: High"
+        sendEvent(name: "spaPump1", value: 'Off')
+        sendEvent(name: "spaPump2", value: 'High')
+        break
+        case 9:
+        log.info "Pump1: Low, Pump2: High"
+        sendEvent(name: "spaPump1", value: 'Low')
+        sendEvent(name: "spaPump2", value: 'High')
+        break
+        case 10:
+        log.info "Pump1: High, Pump2: High"
+        sendEvent(name: "spaPump1", value: 'High')
+        sendEvent(name: "spaPump2", value: 'High')
+        break
+        default :
+        log.info "Pump Mode: Unknown"
+        sendEvent(name: "spaPump1", value: 'Off')
+        sendEvent(name: "spaPump2", value: 'Off')
+    }
+
 
     offset = 17
     log.debug "heatMode: ${B64decoded[offset]}"
