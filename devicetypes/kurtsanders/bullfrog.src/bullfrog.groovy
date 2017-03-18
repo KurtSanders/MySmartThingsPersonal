@@ -30,10 +30,12 @@ metadata {
 	definition (name: "bullfrog", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
 		capability "Actuator"
 		capability "Switch"
-		capability "Switch Level"
         capability "Refresh"
-
-		command "setMode"
+        capability "Temperature Measurement"
+        capability "Sensor"
+		capability "Notification"
+        
+		command "setHotTubStatus"
 	}
 
 	tiles(scale: 2) {
@@ -44,12 +46,12 @@ metadata {
 				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:yellowColor	, nextState:"turningOff"
 				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:yellowColor, nextState:"turningOn"
 			}
- 			tileAttribute("device.statusText", key: "SECONDARY_CONTROL") {
+ 			tileAttribute("statusText", key: "SECONDARY_CONTROL") {
 				attributeState "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
 			}         
 		}
 
-        valueTile("spaCurTemp", "device.spaCurTemp", width: 2, height: 2) {
+        valueTile("spaCurTemp", "spaCurTemp", width: 2, height: 2) {
             state("spaCurTemp", label:'${currentValue}°F',
                 backgroundColors:[
                     [value: 50,  color: blueColor],
@@ -62,10 +64,10 @@ metadata {
                 ]
             )
         }
-        valueTile("spaSetTemp", "device.spaSetTemp", width: 2, height: 2) {
+        valueTile("spaSetTemp", "spaSetTemp", width: 2, height: 2) {
             state("spaSetTemp", label:'${currentValue}')
         }
- 		standardTile("spaPump1", "device.spaPump1", inactiveLabel: false,
+ 		standardTile("spaPump1", "spaPump1", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "Low", label: '${currentValue}', 
 				icon: "st.valves.water.open", backgroundColor: yellowColor
@@ -74,7 +76,7 @@ metadata {
 			state "Off", label: '${currentValue}', 
 				icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
- 		standardTile("spaPump2", "device.spaPump2", inactiveLabel: false,
+ 		standardTile("spaPump2", "spaPump2", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "Low", label: '${currentValue}', 
 				icon: "st.valves.water.open", backgroundColor: yellowColor
@@ -83,14 +85,14 @@ metadata {
 			state "Off", label: '${currentValue}', 
 				icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
- 		standardTile("ledLights", "device.ledLights", inactiveLabel: false,
+ 		standardTile("ledLights", "ledLights", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "On", label: '${currentValue}', 
 				icon: "st.Lighting.light11", backgroundColor: yellowColor
 			state "Off", label: '${currentValue}', 
 				icon: "st.Lighting.light11", backgroundColor: whiteColor
 		}
- 		standardTile("modeState", "device.modeState", inactiveLabel: false,
+ 		standardTile("modeState", "modeState", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "Rest", label: '${currentValue}', 
 				icon: "st.Kids.kids20", backgroundColor: fuchsiaColor
@@ -101,14 +103,14 @@ metadata {
 			state "Off", label: '${currentValue}', 
 				icon: "st.Kids.kids20", backgroundColor: whiteColor
 		}
- 		standardTile("heatMode", "device.heatMode", inactiveLabel: false,
+ 		standardTile("heatMode", "heatMode", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "On", label: '', 
 				icon: "st.thermostat.heat", backgroundColor: redColor
 			state "Off", label: '', 
 				icon: "st.thermostat.heating-cooling-off", backgroundColor: whiteColor
 		}
-        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+        standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         
@@ -124,274 +126,31 @@ def installed() {
 
 def parse(String description) {
 	// This is a simulated device. No incoming data to parse.
+	log.debug "parse: Begin..."
+	log.debug "parse: End..."
 }
 
 def on() {
-	log.debug "turningOn"
+	log.trace "turningOn"
 	sendEvent(name: "switch", value: "on")
-    updateBullfrogStatus()
 }
 
 def off() {
-	log.debug "turningOff"
+	log.trace "turningOff"
 	sendEvent(name: "switch", value: "off")
-    updateBullfrogStatus()
     return
 }
 
 def refresh() {
     log.trace("--- handler.refresh")
-    updateBullfrogStatus()
 	return
 }
 
-def updateBullfrogStatus() {
-	def hostName 	= "kurtsanders.mynetgear.com"
-	def ipAddress 	= convertHostnameToIPAddress(hostName)
-    def devID 		= "00000000-00000000-001527FF-FF09818B"
-    def header = [
-        'UserAgent': 'Spa / 48 CFNetwork / 758.5.3 Darwin / 15.6.0', 
-        'Cookie': 'JSESSIONID = BC58572FF42D65B183B0318CF3B69470; BIGipServerAWS - DC - CC - Pool - 80 = 3959758764.20480.0000', 
-        'Authorization': 'Basic QmFsYm9hV2F0ZXJJT1NBcHA6azJuVXBSOHIh'
-    ]
-
-    def skip_getDevId = true
-
-    if (skip_getDevId==false) {
-        devID = getDevId(ipAddress, header)
-        if (devID == false) {
-            return
-        }
+def setHotTubStatus(params) {
+    log.debug "params: ${params}"
+    for ( e in params ) {
+        log.debug "key = ${e.key}, value = ${e.value}"
+        sendEvent(name: "${e.key}", value: "${e.value}")
     }
-
-	def byte[] B64decoded = getOnlineData(devID, header)
-    log.debug "B64decoded from getOnlineData(): ${B64decoded}"
-    
-	if (B64decoded==false) {
-		return
-    }
-	decodeBullfrogB64Data(B64decoded)
 }
 
-private String convertHostnameToIPAddress(hostname) {
-    def params = [
-        uri: "http://dns.google.com/resolve?name=" + hostname,
-        contentType: 'application/json'
-    ]
-    def retVal = null
-    try {
-        retVal = httpGet(params) { response ->
-            log.trace "Request was successful, data=$response.data, status=$response.status"
-            //log.trace "Result Status : ${response.data?.Status}"
-            if (response.data?.Status == 0) { // Success
-                for (answer in response.data?.Answer) { // Loop through results looking for the first IP address returned otherwise it's redirects
-//                    log.trace "Processing response: ${answer}"
-                    log.trace "Hostname ${answer?.name} has IP Address ${answer?.data}"
-                    return answer?.data // We're done here (if there are more ignore it, we'll use the first IP address returned)
-                }
-            } else {
-                log.warn "DNS unable to resolve hostname ${response.data?.Question[0]?.name}, Error: ${response.data?.Comment}"
-            }
-        }
-    } catch (Exception e) {
-        log.warn("Unable to convert hostname to IP Address, Error: $e")
-    }
-
-    //log.trace "Returning IP $retVal for Hostname $hostname"
-    return retVal
-}
-
-def getDevId(p,h) {
-    log.debug "getOnlineStatus(): Begin"
-    def devID = ""
-    def ip 		= p
-    def header	= h
-    def url   	= "https://my.idigi.com/ws/DeviceCore/.json?condition=dpGlobalIp='" + ip + "'"
-    def params = [
-        'uri'			: url,
-        'headers'		: header,
-        'contentType'	: 'application/json'
-    ]
-    log.debug "Start httpGet ============="
-    try {
-        httpGet(params) 
-        { resp -> 
-            // log.debug "response data: ${resp.data}"
-            devID = resp.data.items.devConnectwareId?.get(0)
-            log.info "devID = ${devID}"
-            if(resp.status == 200) {
-                log.debug "HttpGet Request was OK"
-            }
-            else {
-                log.error "HttpGet Request got http status ${resp.status}"
-                return false 
-            }
-        }
-    }    
-    catch (Exception e) 
-    {
-        log.debug e
-        return false
-    }
-    return devID
-}
-
-def byte[] getOnlineData(d, h) {
-    log.debug "getOnlineData: Start"
-    def devID 		= d
-    def header 		= h
-    def byte[] B64decoded
-    Date now = new Date()
-    def timeString = now.format("EEE MM/dd h:mm a", location.timeZone)
-    log.debug "timeString: ${timeString}"
-
-    def Web_idigi_post  = "https://developer.idigi.com/ws/sci"
-    def Web_postdata 	= '<sci_request version="1.0"><file_system cache="false" syncTimeout="15">\
-    <targets><device id="' + "${devID}" + '"/></targets><commands><get_file path="PanelUpdate.txt"/>\
-    <get_file path="DeviceConfiguration.txt"/></commands></file_system></sci_request>'
-    //    log.debug "Web_postdata: ${Web_postdata}"
-
-    def params = [
-        'uri'			: Web_idigi_post,
-        'headers'		: header,
-        'body'			: Web_postdata	
-    ]
-    log.debug "Start httpPost ============="
-    try {
-        httpPost(params) 
-        { resp -> 
-            if(resp.status == 200) {
-                log.debug "HttpPost Request was OK"
-                sendEvent(name: "statusText", value: "Bullfrog is Online at ${timeString}!")
-                //                log.info "response data: ${resp.data}"
-                def B64encoded = resp.data
-//                def byte[] B64decoded = B64encoded.decodeBase64()
-                B64decoded = B64encoded.decodeBase64()
-                log.info "B64decoded: ${B64decoded}"
-                //                    def hexstring = B64decoded.encodeHex()
-                //                    log.info "hexstring: ${hexstring}"
-            }
-            else {
-                log.error "HttpGet Request got http status ${resp.status}"
-                sendEvent(name: "statusText", value: "Spa Error: Device Not Connected at ${timeString}.")
-                return False
-            }
-        }
-    }    
-    catch (Exception e) 
-    {
-        log.debug e
-        return False
-    }
-    log.debug "getOnlineData: End-> ${B64decoded}"
-    return B64decoded
-}
-
-def decodeBullfrogB64Data(byte[] d) {
-	log.debug "Entering decodeBullfrogB64Data(${d})"
-	def byte[] B64decoded = d
-
-    def offset = 9
-    switch (B64decoded[offset]) {
-        case 0:
-        log.info "Mode: Ready"
-        sendEvent(name: "modeState", value: 'Ready')
-        break
-        case 1:
-        log.info "Mode: Rest"
-        sendEvent(name: "modeState", value: 'Rest')
-        break
-        case 2:
-        log.info "Mode: Ready in Rest"
-        sendEvent(name: "modeState", value: 'Ready in\nRest')
-        break
-        default :
-        log.info "Mode: Unknown"
-        sendEvent(name: "modeState", value: 'Unknown')					                        
-    }
-
-    offset = 12
-    log.debug "setCurTemp: ${B64decoded[offset]}"
-    sendEvent(name: "spaCurTemp", value: B64decoded[offset])
-
-    offset = 15
-    switch (B64decoded[offset]) {
-        case 0:
-        log.info "Pump1: Off, Pump2: Off"
-        sendEvent(name: "spaPump1", value: 'Off')
-        sendEvent(name: "spaPump2", value: 'Off')
-        break
-        case 1:
-        log.info "Pump1: Low, Pump2: Off"
-        sendEvent(name: "spaPump1", value: 'Low')
-        sendEvent(name: "spaPump2", value: 'Off')
-        break
-        case 2:
-        log.info "Pump1: High, Pump2: Off"
-        sendEvent(name: "spaPump1", value: 'High')
-        sendEvent(name: "spaPump2", value: 'Off')
-        break
-        case 4:
-        log.info "Pump1: Off, Pump2: Low"
-        sendEvent(name: "spaPump1", value: 'Off')
-        sendEvent(name: "spaPump2", value: 'Low')
-        break
-        case 5:
-        log.info "Pump1: Low, Pump2: Low"
-        sendEvent(name: "spaPump1", value: 'Low')
-        sendEvent(name: "spaPump2", value: 'Low')
-        break
-        case 6:
-        log.info "Pump1: High, Pump2: Low"
-        sendEvent(name: "spaPump1", value: 'High')
-        sendEvent(name: "spaPump2", value: 'Low')
-        break
-        case 8:
-        log.info "Pump1: Off, Pump2: High"
-        sendEvent(name: "spaPump1", value: 'Off')
-        sendEvent(name: "spaPump2", value: 'High')
-        break
-        case 9:
-        log.info "Pump1: Low, Pump2: High"
-        sendEvent(name: "spaPump1", value: 'Low')
-        sendEvent(name: "spaPump2", value: 'High')
-        break
-        case 10:
-        log.info "Pump1: High, Pump2: High"
-        sendEvent(name: "spaPump1", value: 'High')
-        sendEvent(name: "spaPump2", value: 'High')
-        break
-        default :
-        log.info "Pump Mode: Unknown"
-        sendEvent(name: "spaPump1", value: 'Off')
-        sendEvent(name: "spaPump2", value: 'Off')
-    }
-
-
-    offset = 17
-    log.debug "heatMode: ${B64decoded[offset]}"
-    if (B64decoded[offset]>0) { 
-        log.info "Heat On"
-        sendEvent(name: "heatMode", value: 'On')
-    }
-    else {
-        log.info "Heat Off"
-        sendEvent(name: "heatMode", value: 'Off')
-    }
-
-    offset = 18
-    log.debug "ledState: ${B64decoded[offset]}"
-    if (B64decoded[offset]>0) { 
-        log.info "LED On"
-        sendEvent(name: "ledLights", value: 'On')
-    }
-    else {
-        log.info "LED Off"
-        sendEvent(name: "ledLights", value: 'Off')
-    }
-
-    offset = 24
-    log.debug "setSetTemp: ${B64decoded[offset]}"
-    sendEvent(name: "spaSetTemp", value: B64decoded[offset] + '°F\nSet Mode')
-
-}
