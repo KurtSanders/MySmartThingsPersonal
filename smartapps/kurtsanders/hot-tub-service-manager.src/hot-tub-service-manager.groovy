@@ -21,10 +21,18 @@ preferences {
     section ("Hot Tub Service Manager") {
         paragraph "Select the Virtual Hot Tub switch."
         input "HotTub", "capability.switch",
-            title: "Which Switch is your Hot Tub?",
+            title: "Select Hot Tub Virtual Switch",
             multiple: false,
-            hideWhenEmpty: true,
             required: true		             			
+        input name: "ScheduleRefreshBoolean", type: "bool",
+            title: "Run Refresh on a 1 Min Schedule?",
+            required: true
+    }
+    section("Send Notifications?") {
+        input("recipients", "contact", title: "Send notifications to") {
+            input "phone", "phone", title: "Warn with text message (optional)",
+                description: "Phone Number", required: false
+        }
     }
 }
 def installed() {
@@ -32,29 +40,44 @@ def installed() {
 	initialize()
 }
 def uninstalled() {
+    unschedule(updateHotTubStatus)
+    unsubscribe()
 }
 def updated() {
 	unsubscribe()
+    unschedule()
 	initialize()
 }
 
 def initialize() {
-log.debug "initialize() Started"
-updateHotTubStatus()
-subscribeToCommand(HotTub, "refresh", refresh)
-log.debug "initialize() Ended"
+    log.debug "initialize() Started"
+    updateHotTubStatus()
+    subscribeToCommand(HotTub, "refresh", refresh)
+    if (ScheduleRefreshBoolean) {
+        log.debug "Scheduled 1 Min Refresh Cron"
+        runEvery1Minute(updateHotTubStatus)
+    }
+    else {
+        log.debug "UNScheduled 1 Min Refresh Cron"
+        unschedule()
+    }
+    log.debug "initialize() Ended"
 }
 
 
 def refresh(evt) {
-    log.trace("--- handler.refresh ${evt}")
+    log.debug("--- SmartApp handler.refresh")
+    log.debug "This event name i${evt.name} value is ${evt.value}"
+    // get the Date this event happened at
+    log.debug "This event happened at ${evt.date}"
+    // Update Hot Tub State
     updateHotTubStatus()
-	return
+    return
 }
 
 def updateHotTubStatus() {
 
-log.trace("--- handler.updateHotTubStatus")
+    log.debug("--- handler.updateHotTubStatus")
 
 // Define HTTP Header for Access
     def header = [
@@ -62,14 +85,16 @@ log.trace("--- handler.updateHotTubStatus")
         'Cookie': 'JSESSIONID = BC58572FF42D65B183B0318CF3B69470; BIGipServerAWS - DC - CC - Pool - 80 = 3959758764.20480.0000', 
         'Authorization': 'Basic QmFsYm9hV2F0ZXJJT1NBcHA6azJuVXBSOHIh'
     ]
-
-// Get IP Address of the HotTub WiFi Unit
-	def ipAddress 	= convertHostnameToIPAddress(hostName)
-    if (!ipAddress) {
+    // Get IP Address of the HotTub WiFi Unit
+    def ipAddress 	= convertHostnameToIPAddress(hostName)
+    if (ipAddress) {
+        log.info "Hot Tub ipAddres: ${ipAddress}"
+    }
+    else {
         log.error "convertHostnameToIPAddress(hostName) returned Null"
         return
     }
-    
+
 // Get WiFi Module Device ID using ipAddress (Skip if already obtained/defined above)
     if (!DevId) {
         def devID = getDevId(ipAddress, header)
@@ -91,6 +116,7 @@ log.trace("--- handler.updateHotTubStatus")
     }
 // Decode the array status values into operational statuses   
     decodeHotTubB64Data(B64decoded)
+    log.debug "Ended: updateHotTubStatus()"
 }
 
 private String convertHostnameToIPAddress(hostname) {
@@ -102,10 +128,10 @@ private String convertHostnameToIPAddress(hostname) {
     try {
         retVal = httpGet(params) { response ->
             // log.debug "Request was successful, data=$response.data, status=$response.status"
-            // log.trace "Result Status : ${response.data?.Status}"
+            // log.debug "Result Status : ${response.data?.Status}"
             if (response.data?.Status == 0) { // Success
                 for (answer in response.data?.Answer) { // Loop through results looking for the first IP address returned otherwise it's redirects
-                    // log.trace "Processing response: ${answer}"
+                    // log.debug "Processing response: ${answer}"
                     log.info "Hostname ${answer?.name} has IP Address of '${answer?.data}'"
                     return answer?.data 
                 }
@@ -182,12 +208,22 @@ def byte[] getOnlineData(d, h) {
         { resp -> 
             if(resp.status == 200) {
                 log.debug "HttpPost Request was OK ${resp.status}"
-                // resp.headers.each {
-                // log.debug "${it.name} : ${it.value}"
-                // }
                 if(resp.data == "Device Not Connected") {
                     log.error "HttpPost Request: 'Device Not Connected'"
+                    ScheduleRefreshBoolean = false
+                    unschedule()
                     HotTub.setHotTubStatus(["statusText": "Spa Error: ${resp.data} at ${timeString}."])
+                    def message = "Spa Error: ${resp.data} at ${timeString}."
+                    if (location.contactBookEnabled && recipients) {
+                        log.debug "${message}"
+                        sendNotificationToContacts(message, recipients)
+                    } 
+                    else {
+                        log.debug "Contact book not enabled"
+                        if (phone) {
+                            sendSms(phone, message)
+                        }
+                    }
                     return null
                 }
                 else {
@@ -222,26 +258,17 @@ def decodeHotTubB64Data(byte[] d) {
     log.debug "Entering decodeHotTubB64Data(${d})"
     def byte[] B64decoded = d
     def params = [:]
-
-//  Hot Tub Mode State
-    def offset = 9
-    def modeStateDecodeArray = ["Ready","Rest","Read in\nRest"]
-	params << ["modeState": modeStateDecodeArray[B64decoded[offset]]]
-
-//  Hot Tub Switch
-    log.debug "HotTub Switch Before: ${HotTub.displayName} with current value ${HotTub.currentSwitch}"
-    if (HotTub.currentSwitch == "on") {
-        HotTub.off()
-    }
-    else {
-        HotTub.on()
-    }
-    log.debug "HotTub Switch After: ${HotTub.displayName} with current value ${HotTub.currentSwitch}"
+	def offset = 0
 
 //	Hot Tub Current Temperature
-    offset = 12
-    log.debug "setCurTemp: ${B64decoded[offset]}"
+    offset = 6
+    log.info "spaCurTemp: ${B64decoded[offset]}"
 	params << ["spaCurTemp": B64decoded[offset]]
+
+//  Hot Tub Mode State
+    offset = 9
+    def modeStateDecodeArray = ["Ready","Rest","Read in\nRest"]
+	params << ["modeState": modeStateDecodeArray[B64decoded[offset]]]
 
 //	Hot Tub Pump1 and Pump2 Status
     offset = 15
@@ -289,7 +316,21 @@ def decodeHotTubB64Data(byte[] d) {
     }
     params << ["spaPump1": pumpDecodeArray[0]]
     params << ["spaPump2": pumpDecodeArray[1]]
-    
+
+//  Hot Tub Switch
+    if (pumpDecodeArray==["Off","Off"]) {
+        if (HotTub.currentSwitch == "on") {
+            log.debug "HotTub Switch: Jets Off: Switch: Off"
+            HotTub.off()
+        }
+    }
+    else {
+        log.debug "HotTub Switch: Jets On: Switch: On"
+        if (pumpDecodeArray==["Off","Off"]) {
+            HotTub.on()
+        }
+    }
+
     //	Hot Tub Heat Mode
     offset = 17
     log.debug "heatMode: ${B64decoded[offset]}"
