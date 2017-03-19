@@ -37,7 +37,6 @@ metadata {
         capability "Refresh"
         capability "Temperature Measurement"
         capability "Contact Sensor"
-        capability "Relay Switch"
         
 		command "setHotTubStatus"
 	}
@@ -74,26 +73,26 @@ metadata {
         }
         standardTile("spaPump1", "spaPump1", inactiveLabel: false,
                      decoration: "flat", width: 2, height: 2,) {
-            state "Low", label: 'Pump 1 ${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: yellowColor
-			state "High", label: 'Pump 1 ${currentValue}', 
+            state "Low", label: 'Pump 1\n${currentValue}', 
+				icon: "st.valves.water.open", backgroundColor: blueColor
+			state "High", label: 'Pump 1\n${currentValue}', 
 				icon: "st.valves.water.open", backgroundColor: greenColor
-			state "Off", label: 'Pump 1 ${currentValue}', 
+			state "Off", label: 'Pump 1\n${currentValue}', 
 				icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
  		standardTile("spaPump2", "spaPump2", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
-			state "Low", label: 'Pump 2 ${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: yellowColor
-			state "High", label: 'Pump 2 ${currentValue}', 
+			state "Low", label: 'Pump 2\n${currentValue}', 
+				icon: "st.valves.water.open", backgroundColor: blueColor
+			state "High", label: 'Pump 2\n${currentValue}', 
 				icon: "st.valves.water.open", backgroundColor: greenColor
-			state "Off", label: 'Pump 2 ${currentValue}', 
+			state "Off", label: 'Pump 2\n${currentValue}', 
 				icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
  		standardTile("ledLights", "ledLights", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
 			state "On", label: '${currentValue}', 
-				icon: "st.Lighting.light11", backgroundColor: yellowColor
+				icon: "st.Lighting.light11", backgroundColor: greenColor
 			state "Off", label: '${currentValue}', 
 				icon: "st.Lighting.light11", backgroundColor: whiteColor
 		}
