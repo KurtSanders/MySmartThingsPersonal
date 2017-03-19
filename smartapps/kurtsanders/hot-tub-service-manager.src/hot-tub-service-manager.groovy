@@ -15,23 +15,47 @@ definition(
     iconX3Url: 	"https://s3.amazonaws.com/kurtsanders/MyHotTubLarge.png",
     singleInstance: true
 )
+// {
+//    appSetting "IP"
+//    appSetting "devID"
+// }
 import java.text.SimpleDateFormat;
 
 preferences {
-    section ("Hot Tub Service Manager") {
-        paragraph "Select the Virtual Hot Tub switch."
-        input "HotTub", "capability.switch",
-            title: "Select Hot Tub Virtual Switch",
-            multiple: false,
-            required: true		             			
-        input name: "ScheduleRefreshBoolean", type: "bool",
-            title: "Run Refresh on a 1 Min Schedule?",
-            required: true
+    page(name: "pageOne", title: "Hot Tub Network Information", nextPage: "pageTwo", uninstall: true) {
+        section ("Hot Tub Service Manager") {
+            paragraph "Hot Tub Public External Location"
+            input name: "hostName", type: "string",
+                title: "Public Domain Name of Local Network?",
+                multiple: false,
+                capitalization: "none",
+                required: true
+        }
+        section ("Hot Tub Device") {
+            paragraph "Virtual Hot Tub Device Name."
+            input "HotTub", "device.bullfrog",
+//            input "HotTub", "capability.switch",
+                title: "Select Hot Tub Virtual Switch",
+                multiple: false,
+                required: true
+        }
     }
-    section("Send Notifications?") {
-        input("recipients", "contact", title: "Send notifications to") {
-            input "phone", "phone", title: "Warn with text message (optional)",
-                description: "Phone Number", required: false
+    page(name: "pageTwo", title: "Hot Tub Status Update Frequency", nextPage: "pageThree", uninstall: true ) {
+        section ("CloudControl Polling Interval") {
+            input name: "schedulerFreq", type: "enum",
+                title: "Run Refresh on a X Min Schedule?",
+                options: [0,1,5,10,15,30],
+                required: true
+            mode(title: "Only Poll Hot Tub for specific mode(s)")
+        }
+    }
+    page(name: "pageThree", title: "Notifications and Alerts", install: true, uninstall: true) {
+        section("Send Notifications?") {
+            paragraph "Alerts"
+            input("recipients", "contact", title: "Send notifications to") {
+                input "phone", "phone", title: "Warn with text message (optional)",
+                    description: "Phone Number", required: false
+            }
         }
     }
 }
@@ -51,25 +75,40 @@ def updated() {
 
 def initialize() {
     log.debug "initialize() Started"
-    updateHotTubStatus()
-    subscribeToCommand(HotTub, "refresh", refresh)
-    if (ScheduleRefreshBoolean) {
-        log.debug "Scheduled 1 Min Refresh Cron"
-        runEvery1Minute(updateHotTubStatus)
-    }
-    else {
-        log.debug "UNScheduled 1 Min Refresh Cron"
+    state.hostName = hostName
+    subscribeToCommand(HotTub, "refresh", refresh)    
+    log.debug "Scheduled ${schedulerFreq} Min Refresh Cron"
+    switch(schedulerFreq) {
+        case '0':
+        log.debug "UNScheduled all RunEvery"
         unschedule()
+        case '1':
+        runEvery1Minute(updateHotTubStatus)
+        break
+        case '5':
+        runEvery5Minutes(updateHotTubStatus)
+        break
+        case '10':
+        runEvery10Minutes(updateHotTubStatus)
+        break
+        case '15':
+        runEvery15Minutes(updateHotTubStatus)
+        break
+        case '30':
+        runEvery30Minutes(updateHotTubStatus)
+        break
+        default :
+        log.debug "Unknown Schedule Frequency" 
     }
+    updateHotTubStatus()
     log.debug "initialize() Ended"
 }
 
 
 def refresh(evt) {
     log.debug("--- SmartApp handler.refresh")
-    log.debug "This event name i${evt.name} value is ${evt.value}"
     // get the Date this event happened at
-    log.debug "This event happened at ${evt.date}"
+    log.debug "Refresh event called at ${evt.date}"
     // Update Hot Tub State
     updateHotTubStatus()
     return
@@ -86,30 +125,48 @@ def updateHotTubStatus() {
         'Authorization': 'Basic QmFsYm9hV2F0ZXJJT1NBcHA6azJuVXBSOHIh'
     ]
     // Get IP Address of the HotTub WiFi Unit
-    def ipAddress 	= convertHostnameToIPAddress(hostName)
-    if (ipAddress) {
-        log.info "Hot Tub ipAddres: ${ipAddress}"
-    }
-    else {
-        log.error "convertHostnameToIPAddress(hostName) returned Null"
-        return
-    }
-
-// Get WiFi Module Device ID using ipAddress (Skip if already obtained/defined above)
-    if (!DevId) {
-        def devID = getDevId(ipAddress, header)
-        if (!devID) {
-    	log.error "getDevId(ipAddress, header) returned Null"
+    if (!state.ipAddress) {
+        state.ipAddress 	= convertHostnameToIPAddress(hostName)
+        if (!state.ipAddress) {
+            log.error "convertHostnameToIPAddress(hostName) returned Null"
             return
         }
         else {
-            log.debug "Skipping DevID: Already defined as Constant"
+            log.info "Hot Tub ipAddres: ${state.ipAddress}"
         }
+    }
+    else {
+        log.debug "Skipping IPAddress(): Previously defined as constant: ${state.ipAddress}"    
+    }
+
+
+    // Get WiFi Module Device ID using ipAddress (Skip if already obtained/defined above)
+    if (!state.devID) {
+        state.devID = "00000000-00000000-001527FF-FF09818B"
+        if (!state.devID) {
+            state.devID = getDevId(state.ipAddress, header)
+            if (!state.devID) {
+                log.error "getDevId(ipAddress, header) returned Null"
+                return
+            }
+        }
+    }
+    else {
+        log.debug "Skipping getDevID: Previously defined as constant: ${state.devID}"
     }
 
 // Get array values from cloud for Hot Tub Status
-	def byte[] B64decoded = getOnlineData(devID, header)
-    log.debug "B64decoded returned from getOnlineData(): ${B64decoded}"
+	def byte[] B64decoded = getOnlineData(state.devID, header)
+//    log.debug "B64decoded returned from getOnlineData(): ${B64decoded}"
+    if (!B64decoded) {
+        for (int i = 0; i < 3; i++) {
+            log.debug "${i} Trying B64decoded..."        
+            B64decoded = getOnlineData(state.devID, header)
+            if (!B64decoded) {
+                break
+            }
+        }
+    }
     if (!B64decoded) {
     	log.error "getOnlineData(devID, header) returned Null:  Exiting..."
     	return
@@ -186,16 +243,15 @@ def byte[] getOnlineData(d, h) {
     log.debug "getOnlineData: Start"
     def devID 		= d
     def header 		= h
+    def httpPostStatus = resp
     def byte[] B64decoded
     Date now = new Date()
     def timeString = now.format("EEE MM/dd h:mm:ss a", location.timeZone)
-    log.debug "timeString: ${timeString}"
 
     def Web_idigi_post  = "https://developer.idigi.com/ws/sci"
     def Web_postdata 	= '<sci_request version="1.0"><file_system cache="false" syncTimeout="15">\
     <targets><device id="' + "${devID}" + '"/></targets><commands><get_file path="PanelUpdate.txt"/>\
     <get_file path="DeviceConfiguration.txt"/></commands></file_system></sci_request>'
-    //    log.debug "Web_postdata: ${Web_postdata}"
 
     def params = [
         'uri'			: Web_idigi_post,
@@ -204,50 +260,61 @@ def byte[] getOnlineData(d, h) {
     ]
     log.debug "Start httpPost ============="
     try {
-        httpPost(params) 
-        { resp -> 
-            if(resp.status == 200) {
-                log.debug "HttpPost Request was OK ${resp.status}"
-                if(resp.data == "Device Not Connected") {
-                    log.error "HttpPost Request: 'Device Not Connected'"
-                    ScheduleRefreshBoolean = false
-                    unschedule()
-                    HotTub.setHotTubStatus(["statusText": "Spa Error: ${resp.data} at ${timeString}."])
-                    def message = "Spa Error: ${resp.data} at ${timeString}."
-                    if (location.contactBookEnabled && recipients) {
-                        log.debug "${message}"
-                        sendNotificationToContacts(message, recipients)
-                    } 
-                    else {
-                        log.debug "Contact book not enabled"
-                        if (phone) {
-                            sendSms(phone, message)
-                        }
-                    }
-                    return null
-                }
-                else {
-                    // log.info "response data: ${resp.data}"
-                    HotTub.setHotTubStatus(["statusText": "HotTub is Online at ${timeString}!"])
-                    def B64encoded = resp.data
-                    B64decoded = B64encoded.decodeBase64()
-                    log.info "B64decoded: ${B64decoded}"
-                    // def byte[] B64decoded = B64encoded.decodeBase64()
-                    // def hexstring = B64decoded.encodeHex()
-                    // log.info "hexstring: ${hexstring}"
-                }
-            }
-            else {
-                log.error "HttpPost Request got http status ${resp.status}"
-                HotTub.sendEvent(name: "statusText", value: "Spa Error: http status ${resp.status} at ${timeString}.")
-                return null
-            }
+        httpPost(params) {
+            resp -> 
+            log.debug "httpPost resp.status: ${resp.status}"
+            httpPostStatus = resp
         }
-    }    
+    }
     catch (Exception e) 
     {
-        log.debug e
-//        HotTub.sendEvent(name: "statusText", value: "Spa Error: http status ${e} at ${timeString}.")
+        log.debug "Catch HttpPost Error: ${e}"
+        return null 
+    }
+    if (httpPostStatus==null) {
+        return null
+    }
+    def resp = httpPostStatus
+    if(resp.status == 200) {
+        log.debug "HttpPost Request was OK ${resp.status}"
+        if(resp.data == "Device Not Connected") {
+            log.error "HttpPost Request: 'Device Not Connected'"
+            ScheduleRefreshBoolean = false
+            unschedule()
+            HotTub.setHotTubStatus([
+                "statusText": "Spa Error: ${resp.data} at ${timeString}.", 
+                "cloudConnected":"Offline"
+            ])
+            def message = "Spa Error: ${resp.data} at ${timeString}."
+            if (location.contactBookEnabled && recipients) {
+                log.debug "${message}"
+                sendNotificationToContacts(message, recipients)
+            } 
+            else {
+                log.debug "Contact book not enabled"
+                if (phone) {
+                    sendSms(phone, message)
+                }
+            }
+            return null
+        }
+        else {
+            // log.info "response data: ${resp.data}"
+            HotTub.setHotTubStatus([
+                "statusText": "${timeString}", 
+                "cloudConnected":"Online"
+            ])
+            def B64encoded = resp.data
+            B64decoded = B64encoded.decodeBase64()
+            log.info "B64decoded: ${B64decoded}"
+            // def byte[] B64decoded = B64encoded.decodeBase64()
+            // def hexstring = B64decoded.encodeHex()
+            // log.info "hexstring: ${hexstring}"
+        }
+    }
+    else {
+        log.error "HttpPost Request got http status ${resp.status}"
+        HotTub.setHotTubStatus("statusText":"Spa Error: http status ${resp.status} at ${timeString}.")
         return null
     }
     log.debug "getOnlineData: End"
@@ -255,25 +322,29 @@ def byte[] getOnlineData(d, h) {
 }
 
 def decodeHotTubB64Data(byte[] d) {
-    log.debug "Entering decodeHotTubB64Data(${d})"
+    log.debug "Entering decodeHotTubB64Data"
     def byte[] B64decoded = d
     def params = [:]
-	def offset = 0
+    def offset = 0
 
-//	Hot Tub Current Temperature
+    //	Hot Tub Current Temperature ( <0 is Unavailable )
     offset = 6
-    log.info "spaCurTemp: ${B64decoded[offset]}"
-	params << ["spaCurTemp": B64decoded[offset]]
+    def spaCurTemp = B64decoded[offset]
+    if (spaCurTemp < 0) {
+        spaCurTemp = "--"
+    }
+    log.info "spaCurTemp: ${spaCurTemp}"
+    params << ["spaCurTemp": spaCurTemp]
 
-//  Hot Tub Mode State
+    //  Hot Tub Mode State
     offset = 9
-    def modeStateDecodeArray = ["Ready","Rest","Read in\nRest"]
-	params << ["modeState": modeStateDecodeArray[B64decoded[offset]]]
+    def modeStateDecodeArray = ["Ready","Rest","Ready in\nRest"]
+    params << ["modeState": modeStateDecodeArray[B64decoded[offset]]]
 
-//	Hot Tub Pump1 and Pump2 Status
+    //	Hot Tub Pump1 and Pump2 Status
     offset = 15
-	def pumpDecodeArray = []
-	switch (B64decoded[offset]) {
+    def pumpDecodeArray = []
+    switch (B64decoded[offset]) {
         case 0:
         log.info "Pump1: Off, Pump2: Off"
         pumpDecodeArray=["Off","Off"]
@@ -348,7 +419,6 @@ def decodeHotTubB64Data(byte[] d) {
     log.debug "ledState: ${B64decoded[offset]}"
     if (B64decoded[offset]>0) { 
         log.info "LED On"
-        HotTub.sendEvent(name: "ledLights", value: 'On')
         params << ["ledLights": "On"]
     }
     else {
@@ -365,20 +435,3 @@ def decodeHotTubB64Data(byte[] d) {
     log.debug "Sending Update to Virtual Hot Tub Device: ${params}"
     HotTub.setHotTubStatus(params)
 }
-
-// Constants
-
-def gethostName() {
-    return "kurtsanders.mynetgear.com"
-}
-def getdevID() {
-    return "00000000-00000000-001527FF-FF09818B"
-}
-def getHeaderGet() {
-    return [
-        'UserAgent': 'Spa / 48 CFNetwork / 758.5.3 Darwin / 15.6.0', 
-        'Cookie': 'JSESSIONID = BC58572FF42D65B183B0318CF3B69470; BIGipServerAWS - DC - CC - Pool - 80 = 3959758764.20480.0000', 
-        'Authorization': 'Basic QmFsYm9hV2F0ZXJJT1NBcHA6azJuVXBSOHIh'
-    ]
-}
-
