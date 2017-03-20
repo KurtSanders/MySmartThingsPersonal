@@ -1,5 +1,5 @@
-/* 
- *  Name:	Virtual Contact Sensor for My Bullfrog Hot Tub 
+/*
+ *  Name:	BWA Hot Tub Virtual Device Handler for Balboa 20P WiFi Module
  *  Author: Kurt Sanders
  *  Email:	Kurt@KurtSanders.com
  *  Date:	3/2017
@@ -13,7 +13,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
-import java.text.SimpleDateFormat; 
+import java.text.SimpleDateFormat;
 
 def redColor 		= "#FF0000"
 def redColor1		= "#ff3333"
@@ -31,28 +31,28 @@ def fuchsiaColor 	= "#FF00FF"
 def navyColor 		= "#000080"
 
 metadata {
-	definition (name: "bullfrog", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
+	definition (name: "bwa", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
 		capability "Actuator"
 		capability "Switch"
         capability "Refresh"
         capability "Temperature Measurement"
         capability "Contact Sensor"
-        
+
 		command "setHotTubStatus"
 	}
 
     tiles(scale: 2) {
         standardTile("switch", "device.switch",  width: 2, height: 2, canChangeIcon: true) {
-            state "on", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:greenColor		, nextState:"turningOff"
+            state "on", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:greenColor	, nextState:"turningOff"
             state "off", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:whiteColor	, nextState:"turningOn"
             state "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:yellowColor	, nextState:"turningOff"
-            state "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:yellowColor, nextState:"turningOn"
+            state "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:yellowColor , nextState:"turningOn"
         }
-        standardTile("cloudConnected", "cloudConnected",  width: 2, height: 2, decoration: "flat") {
-            state "Online" , label:'${name}', icon:"st.alarm.water.dry",  backgroundColor:greenColor
-            state "Offline"  , label:'${name}', icon:"st.alarm.water.wet",  backgroundColor:redColor
-        }         
-        standardTile("statusText", "statusText", width: 4, height: 2) {
+        standardTile("cloudConnected", "cloudConnected",  width: 2, height: 2) {
+            state "Online"   , label:'${name}' , icon:"st.alarm.water.dry",  backgroundColor:greenColor
+            state "Offline"  , label:'${name}', icon:"st.alarm.water.wet" ,  backgroundColor:redColor
+        }
+        valueTile("statusText", "statusText", width: 4, height: 2) {
             state "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
         }
         valueTile("spaCurTemp", "spaCurTemp", width: 2, height: 2) {
@@ -71,53 +71,51 @@ metadata {
         valueTile("spaSetTemp", "spaSetTemp", width: 2, height: 2) {
             state("spaSetTemp", label:'${currentValue}')
         }
-        standardTile("spaPump1", "spaPump1", inactiveLabel: false,
-                     decoration: "flat", width: 2, height: 2,) {
-            state "Low", label: 'Pump 1\n${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: blueColor
-			state "High", label: 'Pump 1\n${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: greenColor
-			state "Off", label: 'Pump 1\n${currentValue}', 
-				icon: "st.valves.water.closed", backgroundColor: whiteColor
-		}
- 		standardTile("spaPump2", "spaPump2", inactiveLabel: false,
-			decoration: "flat", width: 2, height: 2,) {
-			state "Low", label: 'Pump 2\n${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: blueColor
-			state "High", label: 'Pump 2\n${currentValue}', 
-				icon: "st.valves.water.open", backgroundColor: greenColor
-			state "Off", label: 'Pump 2\n${currentValue}', 
-				icon: "st.valves.water.closed", backgroundColor: whiteColor
+        standardTile("spaPump1", "spaPump1", width: 2, height: 2, inactiveLabel: false, decoration: "flat",) {
+            state "Low", label: 'Jet1 Low',
+                icon: "st.valves.water.open", backgroundColor: blueColor
+            state "High", label: 'Jet1 High',
+                icon: "st.valves.water.open", backgroundColor: greenColor
+            state "Off", label: 'Jet1 Off',
+                icon: "st.valves.water.closed", backgroundColor: whiteColor
+        }
+ 		standardTile("spaPump2", "spaPump2", inactiveLabel: false, decoration: "flat", width: 2, height: 2,) {
+            state "Low", label: 'Jet2 Low',
+                icon: "st.valves.water.open", backgroundColor: blueColor
+            state "High", label: 'Jet2 High',
+                icon: "st.valves.water.open", backgroundColor: greenColor
+            state "Off", label: 'Jet2 Off',
+                icon: "st.valves.water.closed", backgroundColor: whiteColor
 		}
  		standardTile("ledLights", "ledLights", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
-			state "On", label: '${currentValue}', 
+			state "On", label: '${currentValue}',
 				icon: "st.Lighting.light11", backgroundColor: greenColor
-			state "Off", label: '${currentValue}', 
+			state "Off", label: '${currentValue}',
 				icon: "st.Lighting.light11", backgroundColor: whiteColor
 		}
  		standardTile("modeState", "modeState", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
-			state "Rest", label: '${currentValue}', 
+			state "Rest", label: '${currentValue}',
 				icon: "st.Kids.kids20", backgroundColor: fuchsiaColor
-			state "Ready", label: '${currentValue}', 
+			state "Ready", label: '${currentValue}',
 				icon: "st.Kids.kids20", backgroundColor: greenColor
-			state "Ready in Rest", label: '${currentValue}', 
+			state "Ready/Rest", label: '${currentValue}',
 				icon: "st.Kids.kids20", backgroundColor: yellowColor
-			state "Off", label: '${currentValue}', 
+			state "Off", label: '${currentValue}',
 				icon: "st.Kids.kids20", backgroundColor: whiteColor
 		}
  		standardTile("heatMode", "heatMode", inactiveLabel: false,
 			decoration: "flat", width: 2, height: 2,) {
-			state "On", label: '${name}', 
+			state "On", label: '${name}',
 				icon: "st.thermostat.heat", backgroundColor: redColor
-			state "Off", label: 'Heater', 
+			state "Off", label: 'Heater',
 				icon: "st.thermostat.heating-cooling-off", backgroundColor: whiteColor
 		}
         standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label: 'Refresh', action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-        
+
 		main(["switch"])
 		details(["switch", "spaCurTemp", "modeState", "statusText", "cloudConnected", "heatMode", "ledLights","spaPump1", "spaPump2", "spaSetTemp",  "refresh"])
 	}
