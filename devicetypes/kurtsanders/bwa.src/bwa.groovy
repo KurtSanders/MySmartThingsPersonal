@@ -77,7 +77,7 @@ metadata {
             state "closed", label:'Online', action:"closed", icon:"st.alarm.water.dry", backgroundColor:greenColor
         }
         // Descriptive Text
-        valueTile("statusText", "statusText", width: 6, height: 1) {
+        valueTile("statusText", "statusText", width: 4, height: 2) {
             state "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
         }
         standardTile("spaPump1", "spaPump1", inactiveLabel: false, decoration: "flat", width: 2, height: 2,) {
@@ -126,7 +126,7 @@ metadata {
             [
                 "switch",
                 "temperature",
-                "networkConnected",
+                "contact",
                 "outlet",
                 "light",
                 "modeState",
