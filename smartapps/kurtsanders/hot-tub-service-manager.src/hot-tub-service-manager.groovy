@@ -1,8 +1,20 @@
 /*
- * SanderSoft Hot Tub Service Manager for Balboa 20P WiFi Cloud Access Module
- * Tested on BullFrog Model A7L
- * 2017 (c) SanderSoft
- */
+* SanderSoft Hot Tub Service Manager for Balboa 20P WiFi Cloud Access Module
+* Tested on BullFrog Model A7L
+* 2017 (c) SanderSoft
+*  Author: Kurt Sanders
+*  Email:	Kurt@KurtSanders.com
+*  Date:	3/2017
+*  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+*  in compliance with the License. You may obtain a copy of the License at:
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+*  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+*  for the specific language governing permissions and limitations under the License.
+*
+*/
 
 definition(
     name: 		"Hot Tub (Service Manager)",
@@ -10,9 +22,9 @@ definition(
     author: 	"Kurt@KurtSanders.com",
     description:"Hot Tub (Service Manager)",
     category: 	"My Apps",
-    iconUrl: 	"https://s3.amazonaws.com/kurtsanders/MyHotTubSmall.png",
-    iconX2Url: 	"https://s3.amazonaws.com/kurtsanders/MyHotTubLarge.png",
-    iconX3Url: 	"https://s3.amazonaws.com/kurtsanders/MyHotTubLarge.png",
+    iconUrl: 	"https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/hot-tub-service-manager.src/MyHotTubSmall.png",
+    iconX2Url: 	"https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/hot-tub-service-manager.src/MyHotTubLarge.png",
+    iconX3Url: 	"https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/smartapps/kurtsanders/hot-tub-service-manager.src/MyHotTubLarge.png",
     singleInstance: true
 )
 // {
@@ -22,69 +34,40 @@ definition(
 import java.text.SimpleDateFormat;
 
 preferences {
-    page(name: "mainPage0")
-    page(name: "mainPage1")
-    page(name: "mainPage2")
-    page(name: "mainPage3")
-    page(name: "mainPage4")
+    page(name:"mainNetwork")
+    page(name:"mainDevice")
+    page(name:"mainSchedule")
+    page(name:"mainNotifications")
 }
 
-def mainPage0() {
-    dynamicPage(name: "mainPage0",
-                title: "Hot Tub Setup Information",
-                install: true,
-                uninstall: true) {
-        section ("Enter information in all the sections below") {
-            href(name: "href",
-                 title: "Network Information",
-                 required: true,
-                 page: "mainPage1")
-            href(name: "href",
-                 title: "Virtual Information",
-                 required: true,
-                 page: "mainPage2")
-            href(name: "href",
-                 title: "Polling Status Update Frequency",
-                 required: true,
-                 page: "mainPage3")
-            href(name: "href",
-                 title: "Notifications and Alerts",
-                 required: false,
-                 page: "mainPage4")
-        }
-    }
-}
-
-def mainPage1() {
-    dynamicPage(name: "mainPage1",
+def mainNetwork() {
+    dynamicPage(name: "mainNetwork",
                 title: "Hot Tub Network Location Information",
+                nextPage: "mainDevice",
                 uninstall: true)
     {
-        section ("Hot Tub Virtual device") {
-            paragraph "${createChildDevice()}"
-        }
+        createChildDevice()
         section ("Fully Qualified Domain Name (FQDN)") {
             input name: "hostName", type: "string",
                 title: "Enter FQDN or IP4 address of where your Hot Tub resides on the Internet?",
                 multiple: false,
-                submitOnChange: true,
-                capitalization: "none",
                 required: true
+        }
+    }
+}
+
+def mainDevice() {
+    dynamicPage(name: "mainDevice",
+                title: "My Hot Tub Virtual Device",
+                nextPage: "mainSchedule")
+    {
+        section("My BWA Hot Tub Virtual Device") {
             if (hostName != null) {
                 paragraph "IP Address from FQDN: ${convertHostnameToIPAddress(hostName)}"
             }
             else {
-                paragraph "Enter a Valid FQDN for Verification!"
+                paragraph "Please Return to enter a Valid FQDN for Verification!"
             }
-        }
-    }
-}
-def mainPage2() {
-    dynamicPage(name: "mainPage2",
-                title: "My Hot Tub Virtual Device",
-                uninstall: true)
-    {
-        section ("My BWA Hot Tub Virtual Device") {
             paragraph "Virtual Hot Tub Device Name."
             input "HotTub", "device.bwa",
                 title: "Select Hot Tub Virtual Switch",
@@ -94,24 +77,25 @@ def mainPage2() {
     }
 }
 
-def mainPage3() {
-    dynamicPage(name: "mainPage3",
+def mainSchedule() {
+    dynamicPage(name: "mainSchedule",
                 title: "Hot Tub Status Update Frequency",
-                uninstall: true )
+                nextPage: "mainNotifications")
     {
-        section ("CloudControl Polling Interval") {
+        section("Hot Tub Polling Interval") {
             input name: "schedulerFreq", type: "enum",
                 title: "Run Refresh on a X Min Schedule?",
-                options: [0,1,5,10,15,30],
+                options: ["Off",1,5,10,15,30],
                 required: true
             mode(title: "Limit Polling Hot Tub to specific ST mode(s)",
                  image: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png")
         }
     }
 }
-def mainPage4() {
-    dynamicPage(name: "mainPage4",
+def mainNotifications() {
+    dynamicPage(name: "mainNotifications",
                 title: "Notifications and Alerts",
+                install: true,
                 uninstall: true)
     {
         section("Send Notifications?") {
@@ -130,60 +114,42 @@ def installed() {
     initialize()
 }
 def uninstalled() {
-    unschedule(updateHotTubStatus)
+    unschedule()
     unsubscribe()
     removeChildDevices(getChildDevices())
 }
 def updated() {
     unsubscribe()
-    unschedule()
     initialize()
 }
 
 def initialize() {
-    log.debug "initialize() Started"
+    log.debug "initialize:------- Started"
     state.hostName = hostName
-    subscribeToCommand(HotTub, "refresh", refresh)
-    log.debug "Scheduled ${schedulerFreq} Min Refresh Cron"
-    switch(schedulerFreq) {
-        case '0':
-        log.debug "UNScheduled all RunEvery"
-        unschedule()
-        case '1':
-        runEvery1Minute(updateHotTubStatus)
-        break
-        case '5':
-        runEvery5Minutes(updateHotTubStatus)
-        break
-        case '10':
-        runEvery10Minutes(updateHotTubStatus)
-        break
-        case '15':
-        runEvery15Minutes(updateHotTubStatus)
-        break
-        case '30':
-        runEvery30Minutes(updateHotTubStatus)
-        break
-        default :
-        log.debug "Unknown Schedule Frequency"
-    }
-    updateHotTubStatus()
-    log.debug "initialize() Ended"
+	setScheduler(schedulerFreq)
+    subscribe(HotTub, "switch", appHandler)
+    subscribe(HotTub, "refresh", appHandler)
+    subscribe(app, STrefresh)
+    subscribeToCommand(HotTub, "refresh", appHandler)
+    //	updateHotTubStatus()
+    log.debug "initialize-------- Ended"
 }
 
-
-def refresh(evt) {
-    log.debug("--- SmartApp handler.refresh")
-    // get the Date this event happened at
-    log.debug "Refresh event called at ${evt.date}"
-    // Update Hot Tub State
+def STrefresh(evt) {
+    log.debug("SmartApp handler.STrefresh----- Started")
     updateHotTubStatus()
-    return
+    log.debug("SmartApp handler.STrefresh----- Ended")
+}
+def appHandler(evt) {
+    log.debug("SmartApp Apphandler----- Started")
+    log.debug "app event ${evt.name}:${evt.value} received"
+    updateHotTubStatus()
+//    log.debug "Test: ${HotTub.currentSwitch}"
+    log.debug("SmartApp Apphandler----- Ended")
 }
 
 def updateHotTubStatus() {
-
-    log.debug("--- handler.updateHotTubStatus")
+    log.debug("handler.updateHotTubStatus----Started")
 
 // Define HTTP Header for Access
     def header = [
@@ -238,9 +204,11 @@ def updateHotTubStatus() {
     	log.error "getOnlineData(devID, header) returned Null:  Exiting..."
     	return
     }
-// Decode the array status values into operational statuses
+    // Decode the array status values into operational statuses
     decodeHotTubB64Data(B64decoded)
-    log.debug "Ended: updateHotTubStatus()"
+
+    log.debug("handler.updateHotTubStatus----Ended")
+
 }
 
 private String convertHostnameToIPAddress(hostname) {
@@ -347,8 +315,8 @@ def byte[] getOnlineData(d, h) {
         if(resp.data == "Device Not Connected") {
             log.error "HttpPost Request: ${resp.data}"
             respParams <<  ["statusText": "Hot Tub Fatal Error\n${resp.data}\n${timeString}"]
-            respParams <<  ["cloudConnected":"Offline"]
-            HotTub.setHotTubStatus(respParams)
+            respParams <<  ["contact":"open"]
+            updateDeviceStates(respParams)
             unschedule()
             def message = "Hot Tub Error: ${resp.data}! at ${timeString}."
             if (location.contactBookEnabled && recipients) {
@@ -365,10 +333,11 @@ def byte[] getOnlineData(d, h) {
         }
         else {
             // log.info "response data: ${resp.data}"
-            HotTub.setHotTubStatus([
+            updateDeviceStates([
                 "statusText": "${timeString}",
-                "cloudConnected":"Online"
+                "contact":"closed"
             ])
+
             def B64encoded = resp.data
             B64decoded = B64encoded.decodeBase64()
             log.info "B64decoded: ${B64decoded}"
@@ -398,8 +367,8 @@ def decodeHotTubB64Data(byte[] d) {
     if (spaCurTemp < 0) {
         spaCurTemp = "--"
     }
-    log.info "spaCurTemp: ${spaCurTemp}"
-    params << ["spaCurTemp": spaCurTemp]
+    log.info "temperature: ${spaCurTemp}"
+    params << ["temperature": spaCurTemp]
 
     //  Hot Tub Mode State
     offset = 9
@@ -481,23 +450,28 @@ def decodeHotTubB64Data(byte[] d) {
 
 //	Hot Tub LED Lights
     offset = 18
-    log.debug "ledState: ${B64decoded[offset]}"
+    log.debug "LED light: ${B64decoded[offset]}"
     if (B64decoded[offset]>0) {
         log.info "LED On"
-        params << ["ledLights": "On"]
+        params << ["light": "on"]
     }
     else {
         log.info "LED Off"
-        params << ["ledLights": "Off"]
+        params << ["light": "off"]
     }
 
 	// Hot Tub Set Temperature
     offset = 24
     log.debug "setSetTemp: ${B64decoded[offset]}"
     params << ["spaSetTemp": B64decoded[offset] + '°F\nSet Mode']
+    params << ["spaSetTemp": B64decoded[offset].toInteger()]
 
     // Send Update to Hot Tub Virtual Device
     log.debug "Sending Update to Virtual Hot Tub Device: ${params}"
+    updateDeviceStates(params)
+}
+
+def updateDeviceStates(params) {
     HotTub.setHotTubStatus(params)
 }
 
@@ -505,24 +479,24 @@ def checkValidIpAddress(hostName) {
     if (convertHostnameToIPAddress(hostName) != null) {
         return true
     }
-    else {return false}
+    else {
+        return false
+    }
 }
 
 def createChildDevice() {
-    log.debug "createChildDevice"
+    log.debug "createChildDevice--------Started"
     def deviceId = app.id + "bwaVdevice"
     log.debug "deviceId: ${deviceId}"
-    log.debug "Before getChildDevices(): ${getChildDevices()}"
     def existing = getChildDevice(deviceId)
     if (!existing) {
-        log.debug "Creating Child Device for My Hot Tub"
         def childDevice = addChildDevice("kurtsanders", "bwa", deviceId, null, ["label" : "My Hot Tub"])
-        return "Virtual Device 'My Hot Tub' has been created"
     }
-    else {
-        log.debug "The Virtual Device ${getChildDevices()} already exists"
-        return "Virtual Device 'My Hot Tub' already defined"
+    def children = app.getChildDevices()
+    children.each { child ->
+        log.debug "child device id $child.id with label $child.label"
     }
+    log.debug "createChildDevice--------Ended"
 }
 
 def removeChildDevices(delete) {
@@ -531,23 +505,36 @@ def removeChildDevices(delete) {
         deleteChildDevice(it.deviceNetworkId)
         log.debug "After deleteChildDevice: getChildDevices: ${getChildDevices()}"
     }
-    return "All Child Devices have been removed"
 }
 
-def boolean isIP(String str)
-{
-    try
-    {
-         String[] parts = str.split("\\.");
-         if (parts.length != 4) return false;
-         for (int i = 0; i < 4; ++i)
-         {
-             int p = Integer.parseInt(parts[i]);
-             if (p > 255 || p < 0) return false;
-         }
-         return true;
-    } catch (Exception e)
-    {
-        return false;
+def setScheduler(schedulerFreq) {
+    switch(schedulerFreq) {
+        case 'Off':
+        log.debug "UNScheduled all RunEvery"
+        unschedule()
+        break
+        case '1':
+        log.debug "Scheduled RunEvery${schedulerFreq}Minute"
+        runEvery1Minute(updateHotTubStatus)
+        break
+        case '5':
+        log.debug "Scheduled RunEvery${schedulerFreq}Minute"
+        runEvery5Minutes(updateHotTubStatus)
+        break
+        case '10':
+        log.debug "Scheduled RunEvery${schedulerFreq}Minute"
+        runEvery10Minutes(updateHotTubStatus)
+        break
+        case '15':
+        log.debug "Scheduled RunEvery${schedulerFreq}Minute"
+        runEvery15Minutes(updateHotTubStatus)
+        break
+        case '30':
+        log.debug "Scheduled RunEvery${schedulerFreq}Minute"
+        runEvery30Minutes(updateHotTubStatus)
+        break
+        default :
+        log.debug "Unknown Schedule Frequency"
+        unschedule()
     }
 }
