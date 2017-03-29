@@ -35,13 +35,13 @@ metadata {
         capability "Contact Sensor"
         capability "Temperature Measurement"
         capability "Refresh"
-/*
-        attribute "xspaSetTemp"  ,   "string"
+
+        attribute "spaSetTemp"  ,   "string"
         attribute "heatMode"  	,  	"enum"	, ["Off", "On"]
         attribute "spaPump1"  	,  	"enum"	, ["Off", "Low", "High"]
         attribute "spaPump2"	,  	"enum"	, ["Off", "Low", "High"]
         attribute "modeState"	, 	"enum"	, ["Rest", "Ready", "Rest/Ready", "Off"]
-*/
+
         command "setHotTubStatus"
     }
     tiles(scale: 2) {
@@ -112,8 +112,8 @@ metadata {
         }
         standardTile("heatMode", "heatMode", inactiveLabel: false,
                      decoration: "flat", width: 2, height: 2,) {
-            state "On", label: '${name}',
-                icon: "st.thermostat.heat", backgroundColor: pinkColor
+            state "On", label: 'Heat On',
+                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heatMode.png"
             state "Off", label: 'Heater',
                 icon: "st.thermostat.heating-cooling-off", backgroundColor: whiteColor
         }
@@ -160,12 +160,12 @@ def parse(String description) {
 }
 
 def on() {
-	log.trace "turningOn"
+	log.trace "HotTub: Turning On"
 	sendEvent(name: "switch", value: "on")
 }
 
 def off() {
-	log.trace "turningOff"
+	log.trace "HotTub Turning Off"
 	sendEvent(name: "switch", value: "off")
     return
 }
@@ -182,8 +182,8 @@ def setHotTubStatus(params) {
         sendEvent(name: "${e.key}", value: "${e.value}", displayed: quietBool)
     }
 }
-
-def test() {
+/*
+def testData() {
     Random random = new Random()
     def max = 104
     def min = 50
@@ -232,6 +232,6 @@ def test() {
     tvalue = [name: "spaSetTemp", value: "101 °F\nSet Mode"]
     log.info "Sending sendEvent(${tvalue})"
     sendEvent(tvalue)
-
-
 }
+
+*/

@@ -28,8 +28,9 @@ definition(
     singleInstance: true
 )
 // {
-//    appSetting "IP"
-//    appSetting "devID"
+//		Not Used in this version
+//    	appSetting "IP"
+//    	appSetting "devID"
 // }
 import java.text.SimpleDateFormat;
 
@@ -63,10 +64,27 @@ def mainDevice() {
     {
         section("My BWA Hot Tub Virtual Device") {
             if (hostName != null) {
-                paragraph "IP Address from FQDN: ${convertHostnameToIPAddress(hostName)}"
+                def boolean isIPbool = isIP(hostName)
+                log.info "isIPbool: ${isIPbool}"
+                if(isIPbool){
+                    log.debug "Valid IP4: ${hostName}"
+                    state.ipAddress = hostName
+                    paragraph "IP4 Fixed Address: ${state.ipAddress}"
+                }
+                else {
+                    def isValidDNS = convertHostnameToIPAddress(hostName)
+                    if (isValidDNS==null) {
+                        paragraph "Invalid IP4 Address from FQDN: ${hostName}"
+                        paragraph "Please Go <Back and Enter a Valid IP4 or FQDN"
+                    }
+                    else {
+                        state.ipAddress = isValidDNS
+                        paragraph "Valid IP4 Address from FQDN ${hostName.toLowerCase()} is: ${isValidDNS}"
+                    }
+                }
             }
             else {
-                paragraph "Please Return to enter a Valid FQDN for Verification!"
+                paragraph "Please Return to enter a Valid IP4 or FQDN for Verification!"
             }
             paragraph "Virtual Hot Tub Device Name."
             input "HotTub", "device.bwa",
@@ -127,11 +145,11 @@ def initialize() {
     log.debug "initialize:------- Started"
     state.hostName = hostName
 	setScheduler(schedulerFreq)
-    subscribe(HotTub, "switch", appHandler)
-    subscribe(HotTub, "refresh", appHandler)
     subscribe(app, STrefresh)
+    subscribe(HotTub, "switch", appHandler)
     subscribeToCommand(HotTub, "refresh", appHandler)
-    //	updateHotTubStatus()
+    subscribe(HotTub, "refresh", appHandler)
+//    updateHotTubStatus()
     log.debug "initialize-------- Ended"
 }
 
@@ -144,7 +162,7 @@ def appHandler(evt) {
     log.debug("SmartApp Apphandler----- Started")
     log.debug "app event ${evt.name}:${evt.value} received"
     updateHotTubStatus()
-//    log.debug "Test: ${HotTub.currentSwitch}"
+    log.debug "HotTub Current Switch is: ${HotTub.currentSwitch}"
     log.debug("SmartApp Apphandler----- Ended")
 }
 
@@ -172,16 +190,21 @@ def updateHotTubStatus() {
         log.debug "Skipping IPAddress(): Previously defined as constant: ${state.ipAddress}"
     }
 
-
     // Get WiFi Module Device ID using ipAddress (Skip if already obtained/defined above)
-    if (!state.devID) {
+    if (state.devID==null) {
         state.devID = "00000000-00000000-001527FF-FF09818B"
-        if (!state.devID) {
+        if (state.devID==null) {
+            log.debug "Creating State devID: Previously defined constant: ${state.devID}"
             state.devID = getDevId(state.ipAddress, header)
-            if (!state.devID) {
+            if (state.devID==null) {
                 log.error "getDevId(ipAddress, header) returned Null"
+                def params =  ["statusText": "No Device ID:\n${timeString}"]
+                updateDeviceStates(params)
                 return
             }
+        }
+        else {
+            log.debug "Skipping getDevID: Previously defined as constant: ${state.devID}"
         }
     }
     else {
@@ -423,14 +446,15 @@ def decodeHotTubB64Data(byte[] d) {
     params << ["spaPump2": pumpDecodeArray[1]]
 
 //  Hot Tub Switch
+    log.debug "pumpDecodeArray: ${pumpDecodeArray}"
     if (pumpDecodeArray==["Off","Off"]) {
         if (HotTub.currentSwitch == "on") {
-            log.debug "HotTub Switch: Jets Off: Switch: Off"
+            log.debug "HotTub Set Off Switch: Jets Off: Switch: Off"
             HotTub.off()
         }
     }
     else {
-        log.debug "HotTub Switch: Jets On: Switch: On"
+        log.debug "HotTub Set On Switch: Jets On: Switch: On"
         if (pumpDecodeArray==["Off","Off"]) {
             HotTub.on()
         }
@@ -484,17 +508,36 @@ def checkValidIpAddress(hostName) {
     }
 }
 
+def boolean isIP(String str)
+{
+    try
+    {
+         String[] parts = str.split("\\.");
+         if (parts.length != 4) return false;
+         for (int i = 0; i < 4; ++i)
+         {
+             int p = Integer.parseInt(parts[i]);
+             if (p > 255 || p < 0) return false;
+         }
+         return true;
+    } catch (Exception e)
+    {
+        return false;
+    }
+}
+
+
 def createChildDevice() {
     log.debug "createChildDevice--------Started"
     def deviceId = app.id + "bwaVdevice"
     log.debug "deviceId: ${deviceId}"
     def existing = getChildDevice(deviceId)
     if (!existing) {
-        def childDevice = addChildDevice("kurtsanders", "bwa", deviceId, null, ["label" : "My Hot Tub"])
+        def childDevice = addChildDevice("kurtsanders", "bwa", deviceId, null, ["label" : "Hot Tub"])
     }
     def children = app.getChildDevices()
     children.each { child ->
-        log.debug "child device id $child.id with label $child.label"
+        log.debug "Child BWA device id $child.id already EXISTS with label $child.label"
     }
     log.debug "createChildDevice--------Ended"
 }
