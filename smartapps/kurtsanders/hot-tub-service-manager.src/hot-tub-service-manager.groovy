@@ -47,10 +47,11 @@ def mainNetwork() {
                 nextPage: "mainDevice",
                 uninstall: true)
     {
-        createChildDevice()
-        section ("Fully Qualified Domain Name (FQDN)") {
-            input name: "hostName", type: "string",
-                title: "Enter FQDN or IP4 address of where your Hot Tub resides on the Internet?",
+        section ("Hot Tub WiFi Information") {
+            input name: "hostName", type: "enum",
+                title: "Select the FQDN or public IP Address of your network?",
+                options: ["kurtsanders.mynetgear.com"],
+                capitalization: "none",
                 multiple: false,
                 required: true
         }
@@ -60,35 +61,17 @@ def mainNetwork() {
 def mainDevice() {
     dynamicPage(name: "mainDevice",
                 title: "My Hot Tub Virtual Device",
-                nextPage: "mainSchedule")
+                nextPage: "mainSchedule",
+                uninstall: true)
     {
-        section("My BWA Hot Tub Virtual Device") {
-            if (hostName != null) {
-                def boolean isIPbool = isIP(hostName)
-                log.info "isIPbool: ${isIPbool}"
-                if(isIPbool){
-                    log.debug "Valid IP4: ${hostName}"
-                    state.ipAddress = hostName
-                    paragraph "IP4 Fixed Address: ${state.ipAddress}"
-                }
-                else {
-                    def isValidDNS = convertHostnameToIPAddress(hostName)
-                    if (isValidDNS==null) {
-                        paragraph "Invalid IP4 Address from FQDN: ${hostName}"
-                        paragraph "Please Go <Back and Enter a Valid IP4 or FQDN"
-                    }
-                    else {
-                        state.ipAddress = isValidDNS
-                        paragraph "Valid IP4 Address from FQDN ${hostName.toLowerCase()} is: ${isValidDNS}"
-                    }
-                }
-            }
-            else {
-                paragraph "Please Return to enter a Valid IP4 or FQDN for Verification!"
-            }
-            paragraph "Virtual Hot Tub Device Name."
-            input "HotTub", "device.bwa",
-                title: "Select Hot Tub Virtual Switch",
+        if (state.devID==null) {
+            getHotTubDeviceID(hostName)
+        }
+        section("Hot Tub Virtual Device") {
+            paragraph "Hot Tub WiFi Module DevID: ${state.devID}"
+            input "HotTubDevice", "capability.switch",
+//            input "HotTubDevice", "device.bwa",
+                title: "Select Hot Tub Device",
                 multiple: false,
                 required: true
         }
@@ -98,7 +81,8 @@ def mainDevice() {
 def mainSchedule() {
     dynamicPage(name: "mainSchedule",
                 title: "Hot Tub Status Update Frequency",
-                nextPage: "mainNotifications")
+                nextPage: "mainNotifications",
+                uninstall: true)
     {
         section("Hot Tub Polling Interval") {
             input name: "schedulerFreq", type: "enum",
@@ -126,112 +110,51 @@ def mainNotifications() {
     }
 }
 
-
 def installed() {
     log.debug "Installed with settings: ${settings}"
-    initialize()
+    subscribe(app, appHandler)
+    subscribe(HotTubDevice, "switch", appHandler)
+    subscribeToCommand(HotTubDevice, "refresh", appHandler)
+//    subscribe(HotTubDevice, "refresh", appHandler)
 }
 def uninstalled() {
-    unschedule()
-    unsubscribe()
-    removeChildDevices(getChildDevices())
+    log.debug "uninstalled:------- Started"
+    log.debug "uninstalled:------- Ended"
 }
 def updated() {
+    log.debug "updated:------- Started"
     unsubscribe()
-    initialize()
+    installed()
+    setScheduler(schedulerFreq)
+    log.debug "updated:------- Ended"
 }
 
-def initialize() {
-    log.debug "initialize:------- Started"
-    state.hostName = hostName
-	setScheduler(schedulerFreq)
-    subscribe(app, STrefresh)
-    subscribe(HotTub, "switch", appHandler)
-    subscribeToCommand(HotTub, "refresh", appHandler)
-    subscribe(HotTub, "refresh", appHandler)
-//    updateHotTubStatus()
-    log.debug "initialize-------- Ended"
-}
-
-def STrefresh(evt) {
-    log.debug("SmartApp handler.STrefresh----- Started")
-    updateHotTubStatus()
-    log.debug("SmartApp handler.STrefresh----- Ended")
-}
 def appHandler(evt) {
     log.debug("SmartApp Apphandler----- Started")
-    log.debug "app event ${evt.name}:${evt.value} received"
+    log.debug "ST app event ${evt.name}:${evt.value} received"
     updateHotTubStatus()
-    log.debug "HotTub Current Switch is: ${HotTub.currentSwitch}"
+    log.debug "HotTub Current Switch is: ${HotTubDevice.currentSwitch}"
     log.debug("SmartApp Apphandler----- Ended")
 }
 
 def updateHotTubStatus() {
     log.debug("handler.updateHotTubStatus----Started")
-
-// Define HTTP Header for Access
-    def header = [
-        'UserAgent': 'Spa / 48 CFNetwork / 758.5.3 Darwin / 15.6.0',
-        'Cookie': 'JSESSIONID = BC58572FF42D65B183B0318CF3B69470; BIGipServerAWS - DC - CC - Pool - 80 = 3959758764.20480.0000',
-        'Authorization': 'Basic QmFsYm9hV2F0ZXJJT1NBcHA6azJuVXBSOHIh'
-    ]
-    // Get IP Address of the HotTub WiFi Unit
-    if (!state.ipAddress) {
-        state.ipAddress 	= convertHostnameToIPAddress(hostName)
-        if (!state.ipAddress) {
-            log.error "convertHostnameToIPAddress(hostName) returned Null"
-            return
-        }
-        else {
-            log.info "Hot Tub ipAddres: ${state.ipAddress}"
-        }
-    }
-    else {
-        log.debug "Skipping IPAddress(): Previously defined as constant: ${state.ipAddress}"
-    }
-
-    // Get WiFi Module Device ID using ipAddress (Skip if already obtained/defined above)
-    if (state.devID==null) {
-        state.devID = "00000000-00000000-001527FF-FF09818B"
-        if (state.devID==null) {
-            log.debug "Creating State devID: Previously defined constant: ${state.devID}"
-            state.devID = getDevId(state.ipAddress, header)
-            if (state.devID==null) {
-                log.error "getDevId(ipAddress, header) returned Null"
-                def params =  ["statusText": "No Device ID:\n${timeString}"]
-                updateDeviceStates(params)
-                return
-            }
-        }
-        else {
-            log.debug "Skipping getDevID: Previously defined as constant: ${state.devID}"
-        }
-    }
-    else {
-        log.debug "Skipping getDevID: Previously defined as constant: ${state.devID}"
-    }
-
 // Get array values from cloud for Hot Tub Status
-	def byte[] B64decoded = getOnlineData(state.devID, header)
-//    log.debug "B64decoded returned from getOnlineData(): ${B64decoded}"
+	def byte[] B64decoded = null
     if (!B64decoded) {
-        for (int i = 0; i < 3; i++) {
-            log.debug "${i} Trying B64decoded..."
-            B64decoded = getOnlineData(state.devID, header)
-            if (!B64decoded) {
-                break
-            }
+        for (int i = 1; i < 4; i++) {
+            log.debug "getOnlineData: ${i} attempt..."
+            B64decoded = getOnlineData()
+            if (B64decoded!=null) {break}
         }
     }
-    if (!B64decoded) {
-    	log.error "getOnlineData(devID, header) returned Null:  Exiting..."
+    if (B64decoded==null) {
+    	log.error "getOnlineData: returned Null:  Exiting..."
     	return
     }
     // Decode the array status values into operational statuses
     decodeHotTubB64Data(B64decoded)
-
     log.debug("handler.updateHotTubStatus----Ended")
-
 }
 
 private String convertHostnameToIPAddress(hostname) {
@@ -262,15 +185,18 @@ private String convertHostnameToIPAddress(hostname) {
     return retVal
 }
 
-def getDevId(p,h) {
-    log.debug "getOnlineStatus(): Begin"
+def getDevId() {
+    log.debug "getOnlineStatus(): Begin-----------"
     def devID = ""
-    def ip 		= p
-    def header	= h
-    def url   	= "https://my.idigi.com/ws/DeviceCore/.json?condition=dpGlobalIp='" + ip + "'"
+    state.header = [
+        'UserAgent': 'Spa / 48 CFNetwork / 758.5.3 Darwin / 15.6.0',
+        'Cookie': 'JSESSIONID = BC58572FF42D65B183B0318CF3B69470; BIGipServerAWS - DC - CC - Pool - 80 = 3959758764.20480.0000',
+        'Authorization': 'Basic QmFsYm9hV2F0ZXJJT1NBcHA6azJuVXBSOHIh'
+    ]
+    def url   	= "https://my.idigi.com/ws/DeviceCore/.json?condition=dpGlobalIp='" + state.ipAddress + "'"
     def params = [
         'uri'			: url,
-        'headers'		: header,
+        'headers'		: state.header,
         'contentType'	: 'application/json'
     ]
     log.debug "Start httpGet ============="
@@ -294,26 +220,26 @@ def getDevId(p,h) {
         log.debug e
         return null
     }
-    return devID
+    state.devID = devID
+    log.debug "getOnlineStatus(): End----------"
+
+    return
 }
 
-def byte[] getOnlineData(d, h) {
+def byte[] getOnlineData() {
     log.debug "getOnlineData: Start"
-    def devID 		= d
-    def header 		= h
     def httpPostStatus = resp
     def byte[] B64decoded
     Date now = new Date()
     def timeString = now.format("EEE MM/dd h:mm:ss a", location.timeZone)
-
     def Web_idigi_post  = "https://developer.idigi.com/ws/sci"
     def Web_postdata 	= '<sci_request version="1.0"><file_system cache="false" syncTimeout="15">\
-    <targets><device id="' + "${devID}" + '"/></targets><commands><get_file path="PanelUpdate.txt"/>\
+    <targets><device id="' + "${state.devID}" + '"/></targets><commands><get_file path="PanelUpdate.txt"/>\
     <get_file path="DeviceConfiguration.txt"/></commands></file_system></sci_request>'
 	def respParams = [:]
     def params = [
         'uri'			: Web_idigi_post,
-        'headers'		: header,
+        'headers'		: state.header,
         'body'			: Web_postdata
     ]
     log.debug "Start httpPost ============="
@@ -360,7 +286,6 @@ def byte[] getOnlineData(d, h) {
                 "statusText": "${timeString}",
                 "contact":"closed"
             ])
-
             def B64encoded = resp.data
             B64decoded = B64encoded.decodeBase64()
             log.info "B64decoded: ${B64decoded}"
@@ -371,7 +296,7 @@ def byte[] getOnlineData(d, h) {
     }
     else {
         log.error "HttpPost Request got http status ${resp.status}"
-        HotTub.setHotTubStatus("statusText":"Hot Tub Fatal Error\nHttp Status ${resp.status} at ${timeString}.")
+        HotTubDevice.setHotTubStatus("statusText":"Hot Tub Fatal Error\nHttp Status ${resp.status} at ${timeString}.")
         return null
     }
     log.debug "getOnlineData: End"
@@ -448,15 +373,14 @@ def decodeHotTubB64Data(byte[] d) {
 //  Hot Tub Switch
     log.debug "pumpDecodeArray: ${pumpDecodeArray}"
     if (pumpDecodeArray==["Off","Off"]) {
-        if (HotTub.currentSwitch == "on") {
-            log.debug "HotTub Set Off Switch: Jets Off: Switch: Off"
-            HotTub.off()
-        }
+        log.debug "HotTub Set Off Switch: Jets Off: Switch: Off"
+        params << ["switch": "off"]
     }
     else {
         log.debug "HotTub Set On Switch: Jets On: Switch: On"
         if (pumpDecodeArray==["Off","Off"]) {
-            HotTub.on()
+            params << ["switch": "on"]
+
         }
     }
 
@@ -495,61 +419,6 @@ def decodeHotTubB64Data(byte[] d) {
     updateDeviceStates(params)
 }
 
-def updateDeviceStates(params) {
-    HotTub.setHotTubStatus(params)
-}
-
-def checkValidIpAddress(hostName) {
-    if (convertHostnameToIPAddress(hostName) != null) {
-        return true
-    }
-    else {
-        return false
-    }
-}
-
-def boolean isIP(String str)
-{
-    try
-    {
-         String[] parts = str.split("\\.");
-         if (parts.length != 4) return false;
-         for (int i = 0; i < 4; ++i)
-         {
-             int p = Integer.parseInt(parts[i]);
-             if (p > 255 || p < 0) return false;
-         }
-         return true;
-    } catch (Exception e)
-    {
-        return false;
-    }
-}
-
-
-def createChildDevice() {
-    log.debug "createChildDevice--------Started"
-    def deviceId = app.id + "bwaVdevice"
-    log.debug "deviceId: ${deviceId}"
-    def existing = getChildDevice(deviceId)
-    if (!existing) {
-        def childDevice = addChildDevice("kurtsanders", "bwa", deviceId, null, ["label" : "Hot Tub"])
-    }
-    def children = app.getChildDevices()
-    children.each { child ->
-        log.debug "Child BWA device id $child.id already EXISTS with label $child.label"
-    }
-    log.debug "createChildDevice--------Ended"
-}
-
-def removeChildDevices(delete) {
-    delete.each {
-        log.debug "Before deleteChildDevice: getChildDevices: ${getChildDevices()}"
-        deleteChildDevice(it.deviceNetworkId)
-        log.debug "After deleteChildDevice: getChildDevices: ${getChildDevices()}"
-    }
-}
-
 def setScheduler(schedulerFreq) {
     switch(schedulerFreq) {
         case 'Off':
@@ -580,4 +449,44 @@ def setScheduler(schedulerFreq) {
         log.debug "Unknown Schedule Frequency"
         unschedule()
     }
+}
+
+def boolean isIP(String str)
+{
+    try {
+        String[] parts = str.split("\\.");
+        if (parts.length != 4) return false;
+        for (int i = 0; i < 4; ++i)
+        {
+            int p = Integer.parseInt(parts[i]);
+            if (p > 255 || p < 0) return false;
+        }
+        return true;
+    } catch (Exception e){return false}
+}
+
+def getHotTubDeviceID(hostName) {
+    def boolean isIPbool = isIP(hostName)
+    log.info "isIPbool: ${isIPbool}"
+    if(isIPbool){
+        log.debug "Valid IP4: ${hostName}"
+        state.ipAddress = hostName
+    }
+    else {
+        def dns2ipAddress = convertHostnameToIPAddress(hostName)
+        if (dns2ipAddress != null) {
+            log.debug "Valid IP4: ${dns2ipAddress}"
+            state.ipAddress = dns2ipAddress
+        }
+    }
+    if (state.ipAddress!=null) {
+        getDevId()
+        log.debug "state.devID: ${state.devID}"
+    }
+}
+
+def updateDeviceStates(params) {
+    log.debug "Start: updateDeviceStates-------------"
+    HotTubDevice.setHotTubStatus(params)
+    log.debug "End: updateDeviceStates-------------"
 }

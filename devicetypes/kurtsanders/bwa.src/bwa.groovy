@@ -28,7 +28,6 @@ def blackColor		= "#000000"
 metadata {
     definition (name: "bwa", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
         capability "Switch"
-        capability "Actuator"
         capability "Sensor"
         capability "Light"
         capability "Outlet"
@@ -36,12 +35,14 @@ metadata {
         capability "Temperature Measurement"
         capability "Refresh"
 
+/*
+        capability "Actuator"
         attribute "spaSetTemp"  ,   "string"
         attribute "heatMode"  	,  	"enum"	, ["Off", "On"]
         attribute "spaPump1"  	,  	"enum"	, ["Off", "Low", "High"]
         attribute "spaPump2"	,  	"enum"	, ["Off", "Low", "High"]
         attribute "modeState"	, 	"enum"	, ["Rest", "Ready", "Rest/Ready", "Off"]
-
+*/
         command "setHotTubStatus"
     }
     tiles(scale: 2) {
@@ -142,13 +143,27 @@ metadata {
 }
 
 def refresh() {
-    log.trace("--- handler.refresh")
+    log.debug "Started: --- handler.refresh"
     sendEvent(name: "statusText", value: "Cloud Refresh Requested...", "displayed":false)
-
+    log.debug "Ended:   --- handler.refresh"
 }
 
 def installed() {
 	log.debug "Installed: Begin..."
+    def params = [
+        "statusText":"Installed...",
+        "switch":"off",
+        "temperature":0,
+        "contact":"open",
+        "outlet":"off",
+        "light":"off",
+        "modeState":"Off",
+        "heatMode":"Off",
+        "spaPump1":"Off",
+        "spaPump2":"Off",
+        "spaSetTemp":0
+    ]
+    setHotTubStatus(params)
 	log.debug "Installed: End..."
 }
 
@@ -167,12 +182,11 @@ def on() {
 def off() {
 	log.trace "HotTub Turning Off"
 	sendEvent(name: "switch", value: "off")
-    return
 }
 
 def setHotTubStatus(params) {
     log.debug "params: ${params}"
-    def quietBool 		= true
+    def quietBool = true
     for ( e in params ) {
         log.info "key = ${e.key}, value = ${e.value}"
         quietBool = true
