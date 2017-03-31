@@ -14,6 +14,7 @@
 *
 */
 import groovy.json.JsonSlurper
+import java.text.SimpleDateFormat;
 
 preferences {
 }
@@ -35,8 +36,12 @@ metadata {
         standardTile("refresh", "device.poll", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
             state "default", action:"polling.poll", icon:"st.secondary.refresh"
         }
+        // Descriptive Text
+        valueTile("statusText", "statusText", width: 4, height: 2) {
+            state "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
+        }
         main "contact"
-        details(["contact", "refresh"])
+        details(["contact", "statusText", "refresh"])
     }
 }
 
@@ -77,6 +82,9 @@ def main() {
     def path = "/hottub"
     def port = "1500"
     def headers = [:]
+    Date now = new Date()
+    def timeString = now.format("EEE MM/dd h:mm:ss a", location.timeZone)
+    sendEvent(name: 'statusText', value: timeString, , displayed: false)
     def hosthex = convertIPtoHex(host)
     def porthex = convertPortToHex(port)
     device.deviceNetworkId = "$hosthex:$porthex"
