@@ -15,5 +15,7 @@
 - Works with Vista/Honeywell Alarms
 ### Alarmdecoder SmartApp
 - Provides integration with Alarm Decoder hardware
-### Bullfrog DTH
+### BWA Device Type Handler
 - Provides cloud connected status of a Balboa Model 20p WiFi connected Hot Tub 
+### RestServer Device Type Handler
+- Provides Ping Response from a local network REST API Webserver
