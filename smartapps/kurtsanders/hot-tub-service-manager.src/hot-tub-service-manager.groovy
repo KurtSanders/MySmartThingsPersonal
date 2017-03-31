@@ -70,7 +70,6 @@ def mainDevice() {
         section("Hot Tub Virtual Device") {
             paragraph "Hot Tub WiFi Module DevID: ${state.devID}"
             input "HotTubDevice", "capability.switch",
-//            input "HotTubDevice", "device.bwa",
                 title: "Select Hot Tub Device",
                 multiple: false,
                 required: true
@@ -115,7 +114,6 @@ def installed() {
     subscribe(app, appHandler)
     subscribe(HotTubDevice, "switch", appHandler)
     subscribeToCommand(HotTubDevice, "refresh", appHandler)
-//    subscribe(HotTubDevice, "refresh", appHandler)
 }
 def uninstalled() {
     log.debug "uninstalled:------- Started"
@@ -133,7 +131,6 @@ def appHandler(evt) {
     log.debug("SmartApp Apphandler----- Started")
     log.debug "ST app event ${evt.name}:${evt.value} received"
     updateHotTubStatus()
-    log.debug "HotTub Current Switch is: ${HotTubDevice.currentSwitch}"
     log.debug("SmartApp Apphandler----- Ended")
 }
 
@@ -380,7 +377,6 @@ def decodeHotTubB64Data(byte[] d) {
         log.debug "HotTub Set On Switch: Jets On: Switch: On"
         if (pumpDecodeArray==["Off","Off"]) {
             params << ["switch": "on"]
-
         }
     }
 
