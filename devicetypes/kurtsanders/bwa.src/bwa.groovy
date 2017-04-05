@@ -33,6 +33,7 @@ metadata {
         capability "Outlet"
         capability "Contact Sensor"
         capability "Temperature Measurement"
+        capability "Thermostat"
         capability "Refresh"
 
 /*
@@ -81,6 +82,9 @@ metadata {
         valueTile("statusText", "statusText", width: 4, height: 2) {
             state "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
         }
+        valueTile("schedule", "schedule", width: 2, height: 2) {
+            state "schedule", label: 'Refresh\nSchedule\n${currentValue} min(s)', backgroundColor:whiteColor, defaultState: true
+        }
         standardTile("spaPump1", "spaPump1", inactiveLabel: false, decoration: "flat", width: 2, height: 2,) {
             state "Low", label: 'Jet1 Low',
                 icon: "st.valves.water.open", backgroundColor: greenColor
@@ -118,6 +122,16 @@ metadata {
             state "Off", label: 'Heater',
                 icon: "st.thermostat.heating-cooling-off", backgroundColor: whiteColor
         }
+        standardTile("operatingState", "device.thermostatOperatingState", width: 2, height: 2) {
+            state "idle", label:'${name}', backgroundColor:"#ffffff"
+            state "heating", label:'${name}', backgroundColor:"#ffa81e"
+        }
+        standardTile("mode", "device.thermostatMode", width: 2, height: 2,) {
+            state "off", label: 'Heat ${name}', icon: "st.Outdoor.outdoor19", backgroundColor: "#ffffff"
+            state "heat", label: '${name}',
+                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heatMode.png",
+                backgroundColor: "#ffffff"
+        }
         standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label: 'Refresh', action:"refresh.refresh", icon:"st.secondary.refresh"
         }
@@ -132,11 +146,14 @@ metadata {
                 "light",
                 "modeState",
                 "heatMode",
+                "operatingState",
+                "mode",
                 "spaPump1",
                 "spaPump2",
                 "spaSetTemp",
                 "refresh",
-                "statusText"
+                "statusText",
+                "schedule"
             ]
         )
     }

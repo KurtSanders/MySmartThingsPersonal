@@ -131,6 +131,7 @@ def appHandler(evt) {
     log.debug("SmartApp Apphandler----- Started")
     log.debug "ST app event ${evt.name}:${evt.value} received"
     updateHotTubStatus()
+    setScheduler(schedulerFreq)
     log.debug("SmartApp Apphandler----- Ended")
 }
 
@@ -262,6 +263,7 @@ def byte[] getOnlineData() {
             log.error "HttpPost Request: ${resp.data}"
             respParams <<  ["statusText": "Hot Tub Fatal Error\n${resp.data}\n${timeString}"]
             respParams <<  ["contact":"open"]
+            respParams <<  ["schedule":"0"]
             updateDeviceStates(respParams)
             unschedule()
             def message = "Hot Tub Error: ${resp.data}! at ${timeString}."
@@ -386,10 +388,14 @@ def decodeHotTubB64Data(byte[] d) {
     if (B64decoded[offset]>0) {
         log.info "Heat On"
         params << ["heatMode": "On"]
+        params << ["operatingState": "heating"]
+        params << ["mode": "heat"]
     }
     else {
         log.info "Heat Off"
         params << ["heatMode": "Off"]
+        params << ["operatingState": "idle"]
+        params << ["mode": "off"]
     }
 
 //	Hot Tub LED Lights
@@ -416,6 +422,7 @@ def decodeHotTubB64Data(byte[] d) {
 }
 
 def setScheduler(schedulerFreq) {
+    updateDeviceStates(["schedule":"${schedulerFreq}"])
     switch(schedulerFreq) {
         case 'Off':
         log.debug "UNScheduled all RunEvery"
