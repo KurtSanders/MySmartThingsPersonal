@@ -75,8 +75,12 @@ metadata {
         }
         // Network Connected Status
         standardTile("contact", "device.contact",  width: 2, height: 2, decoration: "flat") {
-            state "open",   label:'Offline', action:"open",   icon:"st.alarm.water.wet", backgroundColor:yellowColor
-            state "closed", label:'Online', action:"closed", icon:"st.alarm.water.dry", backgroundColor:greenColor
+            state "open",   label:'Offline', action:"open",
+                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/offline.png",
+                backgroundColor:yellowColor
+            state "closed", label:'Online', action:"closed",
+                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/online.png",
+                backgroundColor:"#18BA02"
         }
         // Descriptive Text
         valueTile("statusText", "statusText", width: 4, height: 2) {
@@ -113,24 +117,16 @@ metadata {
                 icon: "st.Kids.kids20", backgroundColor: whiteColor
         }
         valueTile("spaSetTemp", "spaSetTemp", width: 2, height: 2) {
-            state("spaSetTemp", label:'${currentValue}°F Set Temp')
-        }
-        standardTile("heatMode", "heatMode", inactiveLabel: false,
-                     decoration: "flat", width: 2, height: 2,) {
-            state "On", label: 'Heat On',
-                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heatMode.png"
-            state "Off", label: 'Heater',
-                icon: "st.thermostat.heating-cooling-off", backgroundColor: whiteColor
+            state("spaSetTemp", label:'Set Temp\n${currentValue}°F')
         }
         standardTile("operatingState", "device.thermostatOperatingState", width: 2, height: 2) {
             state "idle", label:'${name}', backgroundColor:"#ffffff"
             state "heating", label:'${name}', backgroundColor:"#ffa81e"
         }
-        standardTile("mode", "device.thermostatMode", width: 2, height: 2,) {
-            state "off", label: 'Heat ${name}', icon: "st.Outdoor.outdoor19", backgroundColor: "#ffffff"
-            state "heat", label: '${name}',
-                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heatMode.png",
-                backgroundColor: "#ffffff"
+        standardTile("thermostatMode", "device.thermostatMode", decoration: "flat", width: 2, height: 2,) {
+            state "off",  label: 'Heat Off', icon: "st.Outdoor.outdoor19"
+            state "heat", label: 'Heat On',
+                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heatMode.png"
         }
         standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label: 'Refresh', action:"refresh.refresh", icon:"st.secondary.refresh"
@@ -145,9 +141,8 @@ metadata {
                 "outlet",
                 "light",
                 "modeState",
-                "heatMode",
                 "operatingState",
-                "mode",
+                "thermostatMode",
                 "spaPump1",
                 "spaPump2",
                 "spaSetTemp",
@@ -213,56 +208,3 @@ def setHotTubStatus(params) {
         sendEvent(name: "${e.key}", value: "${e.value}", displayed: quietBool)
     }
 }
-/*
-def testData() {
-    Random random = new Random()
-    def max = 104
-    def min = 50
-    int randomNumber = random.nextInt(max + 1 - min) + min;
-    def tvalue = [name: "temperature", value: randomNumber, "unit" : "°F"]
-    log.info "Sending sendEvent(${tvalue})"
-    sendEvent(tvalue)
-
-    def	things = ["switch","outlet","light"]
-    things.each {
-    	log.debug "Things: ${it}"
-        def currentState = device.currentValue("${it}")
-        log.info "currentState: ${currentState}"
-        if (currentState=='on') {
-            currentState='off'
-        }
-        else
-        {
-            currentState='on'
-        }
-        tvalue = [name: "${it}", value: currentState]
-        log.info "Sending sendEvent(${tvalue})"
-        sendEvent(tvalue)
-    }
-
-    tvalue = [name: "modeState", value: "Ready/Rest"]
-    log.info "Sending sendEvent(${tvalue})"
-    sendEvent(tvalue)
-
-    tvalue = [name: "networkConnected", value: "closed"]
-    log.info "Sending sendEvent(${tvalue})"
-    sendEvent(tvalue)
-
-    tvalue = [name: "heatMode", value: "On"]
-    log.info "Sending sendEvent(${tvalue})"
-    sendEvent(tvalue)
-
-    tvalue = [name: "spaPump1", value: "Low"]
-    log.info "Sending sendEvent(${tvalue})"
-    sendEvent(tvalue)
-
-    tvalue = [name: "spaPump2", value: "High"]
-    log.info "Sending sendEvent(${tvalue})"
-    sendEvent(tvalue)
-
-    tvalue = [name: "spaSetTemp", value: "101 °F\nSet Mode"]
-    log.info "Sending sendEvent(${tvalue})"
-    sendEvent(tvalue)
-}
-
-*/

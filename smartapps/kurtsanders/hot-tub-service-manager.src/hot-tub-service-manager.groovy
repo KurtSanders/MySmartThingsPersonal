@@ -114,6 +114,21 @@ def installed() {
     subscribe(app, appHandler)
     subscribe(HotTubDevice, "switch", appHandler)
     subscribeToCommand(HotTubDevice, "refresh", appHandler)
+    state.hotTubMap= [
+    "light"			:null,
+    "spaPump1"		:null,
+    "spaPump2"		:null,
+    "spaSetTemp"	:null,
+    "modeState"		:null,
+    "temperature"	:null,
+    "operatingState":null,
+    "contact"		:null,
+    "switch"		:null,
+    "schedule"		:null,
+    "thermostatMode":null,
+    "statusText"	:null
+]
+
 }
 def uninstalled() {
     log.debug "uninstalled:------- Started"
@@ -137,6 +152,7 @@ def appHandler(evt) {
 
 def updateHotTubStatus() {
     log.debug("handler.updateHotTubStatus----Started")
+
 // Get array values from cloud for Hot Tub Status
 	def byte[] B64decoded = null
     if (!B64decoded) {
@@ -148,10 +164,14 @@ def updateHotTubStatus() {
     }
     if (B64decoded==null) {
     	log.error "getOnlineData: returned Null:  Exiting..."
+        updateDeviceStates()
     	return
     }
     // Decode the array status values into operational statuses
     decodeHotTubB64Data(B64decoded)
+
+// Send Update to Hot Tub Virtual Device
+    updateDeviceStates()
     log.debug("handler.updateHotTubStatus----Ended")
 }
 
@@ -261,11 +281,11 @@ def byte[] getOnlineData() {
         log.debug "HttpPost Request was OK ${resp.status}"
         if(resp.data == "Device Not Connected") {
             log.error "HttpPost Request: ${resp.data}"
-            respParams <<  ["statusText": "Hot Tub Fatal Error\n${resp.data}\n${timeString}"]
-            respParams <<  ["contact":"open"]
-            respParams <<  ["schedule":"0"]
-            updateDeviceStates(respParams)
             unschedule()
+            state.hotTubMap.statusText 		= "Hot Tub Fatal Error\n${resp.data}\n${timeString}"
+            state.hotTubMap.contact 		= "open"
+            state.hotTubMap.schedule		= "0"
+            updateDeviceStates()
             def message = "Hot Tub Error: ${resp.data}! at ${timeString}."
             if (location.contactBookEnabled && recipients) {
                 log.debug "${message}"
@@ -281,10 +301,8 @@ def byte[] getOnlineData() {
         }
         else {
             // log.info "response data: ${resp.data}"
-            updateDeviceStates([
-                "statusText": "${timeString}",
-                "contact":"closed"
-            ])
+            state.hotTubMap.statusText	= "${timeString}"
+            state.hotTubMap.contact		= "closed"
             def B64encoded = resp.data
             B64decoded = B64encoded.decodeBase64()
             log.info "B64decoded: ${B64decoded}"
@@ -295,7 +313,7 @@ def byte[] getOnlineData() {
     }
     else {
         log.error "HttpPost Request got http status ${resp.status}"
-        HotTubDevice.setHotTubStatus("statusText":"Hot Tub Fatal Error\nHttp Status ${resp.status} at ${timeString}.")
+        state.hotTubMap.statusText	= "Hot Tub Fatal Error\nHttp Status ${resp.status} at ${timeString}."
         return null
     }
     log.debug "getOnlineData: End"
@@ -314,21 +332,21 @@ def decodeHotTubB64Data(byte[] d) {
     if (spaCurTemp < 0) {
         spaCurTemp = "--"
     }
-    log.info "temperature: ${spaCurTemp}"
-    params << ["temperature": spaCurTemp]
+    state.hotTubMap.temperature	= "${spaCurTemp}"
 
     //  Hot Tub Mode State
     offset = 9
     def modeStateDecodeArray = ["Ready","Rest","Ready/Rest"]
-    params << ["modeState": modeStateDecodeArray[B64decoded[offset]]]
-
+	state.hotTubMap.modeState = modeStateDecodeArray[B64decoded[offset]]
     //	Hot Tub Pump1 and Pump2 Status
     offset = 15
     def pumpDecodeArray = []
+    state.hotTubMap.switch = "on"
     switch (B64decoded[offset]) {
         case 0:
         log.info "Pump1: Off, Pump2: Off"
         pumpDecodeArray=["Off","Off"]
+        state.hotTubMap.switch = "off"
         break
         case 1:
         log.info "Pump1: Low, Pump2: Off"
@@ -365,64 +383,40 @@ def decodeHotTubB64Data(byte[] d) {
         default :
         log.info "Pump Mode: Unknown"
         pumpDecodeArray=["Off","Off"]
+        state.hotTubMap.switch = "off"
     }
-    params << ["spaPump1": pumpDecodeArray[0]]
-    params << ["spaPump2": pumpDecodeArray[1]]
-
-//  Hot Tub Switch
-    log.debug "pumpDecodeArray: ${pumpDecodeArray}"
-    if (pumpDecodeArray==["Off","Off"]) {
-        log.debug "HotTub Set Off Switch: Jets Off: Switch: Off"
-        params << ["switch": "off"]
-    }
-    else {
-        log.debug "HotTub Set On Switch: Jets On: Switch: On"
-        if (pumpDecodeArray==["Off","Off"]) {
-            params << ["switch": "on"]
-        }
-    }
+    state.hotTubMap.spaPump1 = pumpDecodeArray[0]
+    state.hotTubMap.spaPump2 = pumpDecodeArray[1]
 
     //	Hot Tub Heat Mode
     offset = 17
-    log.debug "heatMode: ${B64decoded[offset]}"
     if (B64decoded[offset]>0) {
-        log.info "Heat On"
-        params << ["heatMode": "On"]
-        params << ["operatingState": "heating"]
-        params << ["mode": "heat"]
+        state.hotTubMap.operatingState = "heating"
+        state.hotTubMap.thermostatMode = "heat"
     }
     else {
-        log.info "Heat Off"
-        params << ["heatMode": "Off"]
-        params << ["operatingState": "idle"]
-        params << ["mode": "off"]
-    }
+        state.hotTubMap.operatingState = "idle"
+        state.hotTubMap.thermostatMode = "off"
+}
 
 //	Hot Tub LED Lights
     offset = 18
-    log.debug "LED light: ${B64decoded[offset]}"
     if (B64decoded[offset]>0) {
         log.info "LED On"
-        params << ["light": "on"]
+        state.hotTubMap.light = "on"
     }
     else {
-        log.info "LED Off"
-        params << ["light": "off"]
+        state.hotTubMap.light = "off"
     }
 
 	// Hot Tub Set Temperature
     offset = 24
-    log.debug "setSetTemp: ${B64decoded[offset]}"
-    params << ["spaSetTemp": B64decoded[offset] + '°F\nSet Mode']
-    params << ["spaSetTemp": B64decoded[offset].toInteger()]
-
-    // Send Update to Hot Tub Virtual Device
-    log.debug "Sending Update to Virtual Hot Tub Device: ${params}"
-    updateDeviceStates(params)
+    // params << ["spaSetTemp": B64decoded[offset] + '°F\nSet Mode']
+    state.hotTubMap.spaSetTemp = B64decoded[offset].toInteger()
 }
 
 def setScheduler(schedulerFreq) {
-    updateDeviceStates(["schedule":"${schedulerFreq}"])
+    state.hotTubMap.schedule = "${schedulerFreq}"
     switch(schedulerFreq) {
         case 'Off':
         log.debug "UNScheduled all RunEvery"
@@ -488,8 +482,10 @@ def getHotTubDeviceID(hostName) {
     }
 }
 
-def updateDeviceStates(params) {
+def updateDeviceStates() {
     log.debug "Start: updateDeviceStates-------------"
-    HotTubDevice.setHotTubStatus(params)
+    log.debug "Sending Update to Virtual Hot Tub Device:\n${state.hotTubMap}"
+    HotTubDevice.setHotTubStatus(state.hotTubMap)
+
     log.debug "End: updateDeviceStates-------------"
 }
