@@ -19,7 +19,7 @@ import java.text.SimpleDateFormat;
 preferences {
 }
 metadata {
-    definition (name: "restapi", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
+    definition (name: "restServer", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
         capability "Contact Sensor"
         capability "Polling"
         attribute "state", "string"
@@ -32,7 +32,7 @@ metadata {
         standardTile("contact", "device.contact",  width: 2, height: 2, decoration: "flat") {
             state "closed",  label:'Online',  icon: "st.contact.contact.closed", action:"closed", backgroundColor:greenColor
             state "open",    label:'Offline', icon: "st.contact.contact.open",   action:"open",   backgroundColor:yellowColor
-            state "unknown", label:'Unknown', backgroundColor:yellowColor
+//            state "unknown", label:'Unknown', backgroundColor:yellowColor
         }
         standardTile("refresh", "device.poll", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
             state "default", action:"polling.poll", icon:"st.secondary.refresh"
