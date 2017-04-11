@@ -70,7 +70,6 @@ def parse(String description) {
     log.debug "state: ${state}"
     if (state != null) {
         sendEvent(name: 'contact', value: state)
-        }
     }
 }
 
