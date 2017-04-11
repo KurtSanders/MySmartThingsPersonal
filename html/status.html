@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SupervisorCtl Status Report</title>
+</head>
+<body>
+<p><b>SupervisorCtl Status Report - {{ serverStatus }}</b></p>
+{% for p in processes %}
+<div id="contentBox" style="margin:5px auto; width:75%">
+    <div id="column1" style="float:left; margin:1;width:20%;">
+        {{ p.name }}
+    </div>
+
+    <div id="column2" style="float:left; margin:1;width:20%;">
+        {{ p.description }}
+    </div>
+
+    <div id="column3" style="float:left; margin:1;width:20%">
+        {{ p.statename }}
+    </div>
+
+    <div id="column4" style="float:left; margin:1;width:40%">
+        {{ p.start }}
+    </div>
+</div>
+{% endfor %}
+</body>
+</html>
