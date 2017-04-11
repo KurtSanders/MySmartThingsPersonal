@@ -30,8 +30,9 @@ metadata {
     tiles(scale: 2) {
         // Network Connected Status
         standardTile("contact", "device.contact",  width: 2, height: 2, decoration: "flat") {
-            state "open",   label:'Offline', icon: "st.contact.contact.open",   action:"open",   backgroundColor:yellowColor
-            state "closed", label:'Online',  icon: "st.contact.contact.closed", action:"closed", backgroundColor:greenColor
+            state "closed",  label:'Online',  icon: "st.contact.contact.closed", action:"closed", backgroundColor:greenColor
+            state "open",    label:'Offline', icon: "st.contact.contact.open",   action:"open",   backgroundColor:yellowColor
+            state "unknown", label:'Unknown', backgroundColor:yellowColor
         }
         standardTile("refresh", "device.poll", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
             state "default", action:"polling.poll", icon:"st.secondary.refresh"
@@ -47,13 +48,14 @@ metadata {
 
 // parse events into attributes
 def parse(String description) {
-    log.debug "Parsing '${description}'"
+//    log.debug "Parsing '${description}'"
     def jsonSlurper = new JsonSlurper()
     def map = stringToMap(description)
     def bodyString = new String(map.body.decodeBase64())
     log.debug "bodyString: ${bodyString}"
     def body = jsonSlurper.parseText(bodyString)
     log.debug "body: ${body}"
+    log.debug "body.state: ${body.state}"
     def state = "open"
     switch (body.state) {
         case "online" :
@@ -63,7 +65,7 @@ def parse(String description) {
         state = "open"
         break
         default :
-        state = "open"
+        state = "unknown"
         break
     }
     log.debug "state: ${state}"
@@ -79,12 +81,14 @@ def poll() {
 def main() {
     def method = "GET"
     def host = "10.0.0.41"
-    def path = "/hottub"
-    def port = "1500"
+    def path = "/hottub/"
+//    def port = "1500"
+    def port = "5000"
     def headers = [:]
     Date now = new Date()
     def timeString = now.format("EEE MM/dd h:mm:ss a", location.timeZone)
-    sendEvent(name: 'statusText', value: timeString, , displayed: false)
+    def statusTextMsg = "${timeString}\n${host}:${port}"
+    sendEvent(name: 'statusText', value: statusTextMsg, , displayed: false)
     def hosthex = convertIPtoHex(host)
     def porthex = convertPortToHex(port)
     device.deviceNetworkId = "$hosthex:$porthex"
