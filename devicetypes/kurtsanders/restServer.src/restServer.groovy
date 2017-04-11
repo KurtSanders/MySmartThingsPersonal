@@ -1,6 +1,4 @@
-/**
-*  restAPI
-*
+/*
 *  Copyright 2017 kurt@kurtsanders.com
 *
 *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -68,7 +66,7 @@ def parse(String description) {
         break
     }
     log.debug "state: ${state}"
-    if (state != null) {
+    if (state) {
         sendEvent(name: 'contact', value: state)
     }
 }
