@@ -45,14 +45,18 @@ metadata {
 
 // parse events into attributes
 def parse(String description) {
-//    log.debug "Parsing '${description}'"
+    log.debug "Parsing '${description}'"
     def jsonSlurper = new JsonSlurper()
     def map = stringToMap(description)
     def bodyString = new String(map.body.decodeBase64())
-    log.debug "bodyString: ${bodyString}"
+    // log.debug "bodyString: ${bodyString}"
     def body = jsonSlurper.parseText(bodyString)
     log.debug "body: ${body}"
     log.debug "body.state: ${body.state}"
+	state.statusTextMsg = "${state.statusTextMsg} OK"
+	sendEvent(name: 'statusText', value: state.statusTextMsg, , displayed: false)
+	state.statusTextMsg = null
+
     def state = "open"
     switch (body.state) {
         case "online" :
@@ -81,23 +85,23 @@ def main() {
     def method = "GET"
     def host = "10.0.0.41"
     def path = "/hottub/"
-//    def port = "1500"
     def port = "5000"
     def headers = [:]
     Date now = new Date()
     def timeString = now.format("EEE MM/dd h:mm:ss a", location.timeZone)
-    def statusTextMsg = "${timeString}\n${host}:${port}"
-    sendEvent(name: 'statusText', value: statusTextMsg, , displayed: false)
+    state.statusTextMsg = "${timeString}\n${host}:${port}"
+    sendEvent(name: 'statusText', value: state.statusTextMsg, , displayed: false)
     def hosthex = convertIPtoHex(host)
     def porthex = convertPortToHex(port)
-    device.deviceNetworkId = "$hosthex:$porthex"
-    headers.put("HOST", "$host:$port")
+    //  device.deviceNetworkId = "$hosthex:$porthex"
+    //	log.debug "device.deviceNetworkId: ${device.deviceNetworkId}"
+	headers.put("HOST", "$host:$port")
     def hubAction = new physicalgraph.device.HubAction(
         method: method,
         path: path,
         headers: headers
     )
-    // log.debug hubAction
+    log.debug hubAction
     hubAction
 }
 
