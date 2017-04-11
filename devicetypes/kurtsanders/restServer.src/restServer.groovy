@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat;
 preferences {
 }
 metadata {
-    definition (name: "restServer", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
+    definition (name: "restserver", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
         capability "Contact Sensor"
         capability "Polling"
         attribute "state", "string"
