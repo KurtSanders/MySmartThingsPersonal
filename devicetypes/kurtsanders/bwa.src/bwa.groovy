@@ -68,8 +68,8 @@ metadata {
         }
         // LED Lights
         standardTile("light", "device.light",  width: 2, height: 2, canChangeIcon: true) {
-            state "on", label:'${name}', icon:"st.Lighting.light11", backgroundColor:greenColor	, nextState:"turningOff"
-            state "off", label:'${name}', icon:"st.Lighting.light13", backgroundColor:whiteColor	, nextState:"turningOn"
+            state "on", label:'Lights ${name}', icon:"st.Lighting.light11", backgroundColor:greenColor	, nextState:"turningOff"
+            state "off", label:'Lights ${name}', icon:"st.Lighting.light13", backgroundColor:whiteColor	, nextState:"turningOn"
             state "turningOn", label:'${name}', icon:"st.Lighting.light11", backgroundColor:yellowColor	, nextState:"turningOff"
             state "turningOff", label:'${name}', icon:"st.Lighting.light13", backgroundColor:yellowColor , nextState:"turningOn"
         }
@@ -116,12 +116,14 @@ metadata {
             state "Off", label: '${currentValue}',
                 icon: "st.Kids.kids20", backgroundColor: whiteColor
         }
-        valueTile("spaSetTemp", "spaSetTemp", width: 2, height: 2) {
-            state("spaSetTemp", label:'Set Temp\n${currentValue}°F')
+        valueTile("heatingSetpoint", "device.heatingSetpoint", width: 2, height: 2) {
+            state("heatingSetpoint", label:'Set Temp\n${currentValue}°F')
         }
-        standardTile("operatingState", "device.thermostatOperatingState", width: 2, height: 2) {
-            state "idle", label:'${name}', backgroundColor:"#ffffff"
-            state "heating", label:'${name}', backgroundColor:"#ffa81e"
+        standardTile("thermostatOperatingState", "device.thermostatOperatingState", decoration: "flat", width: 2, height: 2) {
+            state "idle", label:'${name}',
+                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/idle.png"
+            state "heating", label:'${name}',
+                icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heating.png"
         }
         standardTile("thermostatMode", "device.thermostatMode", decoration: "flat", width: 2, height: 2,) {
             state "off",  label: 'Heat Off', icon: "st.Outdoor.outdoor19"
@@ -141,11 +143,11 @@ metadata {
                 "outlet",
                 "light",
                 "modeState",
-                "operatingState",
+                "thermostatOperatingState",
                 "thermostatMode",
                 "spaPump1",
                 "spaPump2",
-                "spaSetTemp",
+                "heatingSetpoint",
                 "refresh",
                 "statusText",
                 "schedule"
@@ -156,7 +158,9 @@ metadata {
 
 def refresh() {
     log.debug "Started: --- handler.refresh"
-    sendEvent(name: "statusText", value: "Cloud Refresh Requested...", "displayed":false)
+    Date now = new Date()
+    def timeString = now.format("EEE MM/dd h:mm:ss a", location.timeZone)
+    sendEvent(name: "statusText", value: "Cloud Refresh Requested at\n${timeString}...", "displayed":false)
     log.debug "Ended:   --- handler.refresh"
 }
 
@@ -167,13 +171,14 @@ def installed() {
         "switch":"off",
         "temperature":0,
         "contact":"open",
+        "thermostatOperatingState":"idle",
         "outlet":"off",
         "light":"off",
         "modeState":"Off",
         "heatMode":"Off",
         "spaPump1":"Off",
         "spaPump2":"Off",
-        "spaSetTemp":0
+        "heatingSetpoint":0
     ]
     setHotTubStatus(params)
 	log.debug "Installed: End..."
@@ -204,6 +209,9 @@ def setHotTubStatus(params) {
         quietBool = true
         if (e.key=="statusText") {
             quietBool = false
+        }
+        if (e.key=="thermostatOperatingState") {
+            log.debug "thermostatOperatingState-> ${e.value}"
         }
         sendEvent(name: "${e.key}", value: "${e.value}", displayed: quietBool)
     }

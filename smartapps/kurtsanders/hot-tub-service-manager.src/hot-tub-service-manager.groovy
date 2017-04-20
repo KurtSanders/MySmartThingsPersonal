@@ -115,19 +115,20 @@ def installed() {
     subscribe(HotTubDevice, "switch", appHandler)
     subscribeToCommand(HotTubDevice, "refresh", appHandler)
     state.hotTubMap= [
-    "light"			:null,
-    "spaPump1"		:null,
-    "spaPump2"		:null,
-    "spaSetTemp"	:null,
-    "modeState"		:null,
-    "temperature"	:null,
-    "operatingState":null,
-    "contact"		:null,
-    "switch"		:null,
-    "schedule"		:null,
-    "thermostatMode":null,
-    "statusText"	:null
+    "contact"					:null,
+    "switch"					:null,
+    "schedule"					:null,
+    "light"						:null,
+    "spaPump1"					:null,
+    "spaPump2"					:null,
+    "heatingSetpoint"			:null,
+    "modeState"					:null,
+    "temperature"				:null,
+    "thermostatOperatingState"	:null,
+    "thermostatMode"			:null,
+    "statusText"				:null
 ]
+    log.debug "state.hotTubMap: ${state.hotTubMap}"
 
 }
 def uninstalled() {
@@ -391,11 +392,11 @@ def decodeHotTubB64Data(byte[] d) {
     //	Hot Tub Heat Mode
     offset = 17
     if (B64decoded[offset]>0) {
-        state.hotTubMap.operatingState = "heating"
+        state.hotTubMap.thermostatOperatingState = "heating"
         state.hotTubMap.thermostatMode = "heat"
     }
     else {
-        state.hotTubMap.operatingState = "idle"
+        state.hotTubMap.thermostatOperatingState = "idle"
         state.hotTubMap.thermostatMode = "off"
 }
 
@@ -411,8 +412,8 @@ def decodeHotTubB64Data(byte[] d) {
 
 	// Hot Tub Set Temperature
     offset = 24
-    // params << ["spaSetTemp": B64decoded[offset] + '°F\nSet Mode']
-    state.hotTubMap.spaSetTemp = B64decoded[offset].toInteger()
+    // params << ["heatingSetpoint": B64decoded[offset] + '°F\nSet Mode']
+    state.hotTubMap.heatingSetpoint = B64decoded[offset].toInteger()
 }
 
 def setScheduler(schedulerFreq) {
