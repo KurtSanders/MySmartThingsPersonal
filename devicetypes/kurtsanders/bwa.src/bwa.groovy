@@ -45,6 +45,7 @@ metadata {
         attribute "modeState"	, 	"enum"	, ["Rest", "Ready", "Rest/Ready", "Off"]
 */
         command "setHotTubStatus"
+        command "slider"
     }
     tiles(scale: 2) {
         // Hot Tub Turn On/Off
@@ -56,9 +57,10 @@ metadata {
         }
 
         // Current Temperature Reading
-        valueTile("temperature", "device.temperature", width: 2, height: 2) {
-            state("temperature", label:'${currentValue}°F', unit:"°F",
+        valueTile("temperatureMeasurement", "device.temperatureMeasurement", width: 2, height: 2) {
+            state("temperatureMeasurement", label:'${currentValue}°F', unit:"°F",
                   backgroundColors:[
+                      [value: 0,  color: whiteColor],
                       [value: 50,  color: navyColor],
                       [value: 95,  color: blueColor],
                       [value: 96, color: redColor4],
@@ -83,7 +85,7 @@ metadata {
                 backgroundColor:"#18BA02"
         }
         // Descriptive Text
-        valueTile("statusText", "statusText", width: 4, height: 2) {
+        valueTile("statusText", "statusText", width: 2, height: 2) {
             state "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
         }
         valueTile("schedule", "schedule", width: 2, height: 2) {
@@ -133,12 +135,16 @@ metadata {
         standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label: 'Refresh', action:"refresh.refresh", icon:"st.secondary.refresh"
         }
+        controlTile("levelSliderControl", "device.level", "slider", height: 2,
+                    width: 4, inactiveLabel: false, range:"(0..10)") {
+            state "level", action:"slider"
+    }
 
         main(["switch"])
         details(
             [
                 "switch",
-                "temperature",
+                "temperatureMeasurement",
                 "contact",
                 "outlet",
                 "light",
@@ -150,7 +156,8 @@ metadata {
                 "heatingSetpoint",
                 "refresh",
                 "statusText",
-                "schedule"
+                "schedule",
+                "levelSliderControl"
             ]
         )
     }
@@ -169,7 +176,7 @@ def installed() {
     def params = [
         "statusText":"Installed...",
         "switch":"off",
-        "temperature":0,
+        "temperatureMeasurement":0,
         "contact":"open",
         "thermostatOperatingState":"idle",
         "outlet":"off",
@@ -190,6 +197,11 @@ def parse(String description) {
     log.debug "description: $description"
 	log.debug "parse: End..."
 }
+
+def slider(setLevel) {
+	log.debug "setLevel: ${setLevel}"
+}
+
 
 def on() {
 	log.trace "HotTub: Turning On"
