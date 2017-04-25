@@ -123,7 +123,7 @@ def installed() {
     "spaPump2"					:null,
     "heatingSetpoint"			:null,
     "modeState"					:null,
-    "temperature"				:null,
+    "temperatureMeasurement"	:null,
     "thermostatOperatingState"	:null,
     "thermostatMode"			:null,
     "statusText"				:null
@@ -331,9 +331,9 @@ def decodeHotTubB64Data(byte[] d) {
     offset = 6
     def spaCurTemp = B64decoded[offset]
     if (spaCurTemp < 0) {
-        spaCurTemp = "--"
+        spaCurTemp = 0
     }
-    state.hotTubMap.temperature	= "${spaCurTemp}"
+    state.hotTubMap.temperatureMeasurement	= "${spaCurTemp}"
 
     //  Hot Tub Mode State
     offset = 9
