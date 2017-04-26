@@ -57,8 +57,8 @@ metadata {
         }
 
         // Current Temperature Reading
-        valueTile("temperatureMeasurement", "device.temperatureMeasurement", width: 2, height: 2) {
-            state("temperatureMeasurement", label:'${currentValue}°F', unit:"°F",
+        valueTile("temperature", "device.temperature", width: 2, height: 2) {
+            state("temperature", label:'${currentValue}°F', unit:"°F",
                   backgroundColors:[
                       [value: 0,  color: whiteColor],
                       [value: 50,  color: navyColor],
@@ -144,7 +144,7 @@ metadata {
         details(
             [
                 "switch",
-                "temperatureMeasurement",
+                "temperature",
                 "contact",
                 "outlet",
                 "light",
@@ -176,7 +176,7 @@ def installed() {
     def params = [
         "statusText":"Installed...",
         "switch":"off",
-        "temperatureMeasurement":0,
+        "temperature":0,
         "contact":"open",
         "thermostatOperatingState":"idle",
         "outlet":"off",
@@ -221,9 +221,6 @@ def setHotTubStatus(params) {
         quietBool = true
         if (e.key=="statusText") {
             quietBool = false
-        }
-        if (e.key=="thermostatOperatingState") {
-            log.debug "thermostatOperatingState-> ${e.value}"
         }
         sendEvent(name: "${e.key}", value: "${e.value}", displayed: quietBool)
     }
