@@ -31,24 +31,25 @@ metadata {
 
 	// UI tile definitions
 	tiles {
-        standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true) {
-			state "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
-			state "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
-        }
         standardTile("contact", "device.contact", inactiveLabel: false) {
 			state "open", label: '${name}', icon: "st.contact.contact.open", backgroundColor: "#ffa81e"
 			state "closed", label: '${name}', icon: "st.contact.contact.closed", backgroundColor: "#79b821"
-		}
+        }
+        standardTile("switch", "device.switch", canChangeIcon: true) {
+			state "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
+			state "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
+        }
         standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat") {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
         valueTile("alarm", "device.alarm", inactiveLabel: false) {
-			state "alarm", label:'${currentValue}'
+			state "alarm"  , label:'${currentValue}', icon: "st.alarm.beep.beep"
+			state "default", label:'${currentValue}', icon: "st.unknown.thing.thing-circle"
 		}
 
 
-		main (["switch", "contact"])
-		details(["switch", "contact", "refresh", "alarm"])
+		main (["contact", "switch"])
+		details(["contact", "switch", "refresh", "alarm"])
 	}
 }
 
