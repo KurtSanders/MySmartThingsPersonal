@@ -1,18 +1,19 @@
 /**
- *  Fortrezz MIMOlite
+ *  Fortrezz MIMOlite for My Hot Tub and Awning
  *
  *  Author: Based on SmartThings code
- *  Date: 2014-03-6
+ *  Date: 2017-09-19
  */
 
 // for the UI
 metadata {
 	// Automatically generated. Make future change here.
-	definition (name: "My Mimolite", author: "carlos@carlossaldarriaga.com") {
-		capability "Polling"
-		capability "Refresh"
-		capability "Switch"
+	definition (name: "My Mimolite", namespace: "kurtsanders", author: "kurt@kurtsanders.com") {
 		capability "Contact Sensor"
+		capability "Switch"
+		capability "Polling"
+        capability "Sensor"
+		capability "Refresh"
 	}
 
 	// simulator metadata
@@ -31,11 +32,11 @@ metadata {
 
 	// UI tile definitions
 	tiles {
-        standardTile("contact", "device.contact", inactiveLabel: false) {
+        standardTile("contact", "device.contact", canChangeIcon: true, inactiveLabel: false) {
 			state "open", label: '${name}', icon: "st.contact.contact.open", backgroundColor: "#ffa81e"
 			state "closed", label: '${name}', icon: "st.contact.contact.closed", backgroundColor: "#79b821"
         }
-        standardTile("switch", "device.switch", canChangeIcon: true) {
+        standardTile("switch", "device.switch") {
 			state "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
 			state "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
         }
@@ -46,10 +47,8 @@ metadata {
 			state "alarm"  , label:'${currentValue}', icon: "st.alarm.beep.beep"
 			state "default", label:'${currentValue}', icon: "st.unknown.thing.thing-circle"
 		}
-
-
 		main (["contact", "switch"])
-		details(["contact", "switch", "refresh", "alarm"])
+		details(["contact", "switch", "refresh"])
 	}
 }
 
@@ -65,9 +64,10 @@ def parse(String description) {
 
 def sensorValueEvent(Short value) {
 	if (value) {
-		createEvent(name: "contact", value: "open", descriptionText: "$device.displayName is open")
+		createEvent(name: "contact", value: "open", descriptionText: "Awning new contact is open")
 	} else {
-		createEvent(name: "contact", value: "closed", descriptionText: "$device.displayName is closed")
+//		createEvent(name: "contact", value: "closed", descriptionText: "$device.displayName is closed")
+		createEvent(name: "contact", value: "closed", descriptionText: "Awning new contact is closed")
 	}
 }
 
