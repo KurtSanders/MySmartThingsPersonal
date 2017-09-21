@@ -7,15 +7,21 @@
 - Works in concert with MQ Lite SmartApp. 
 - Parses the emails and updates SmartThing virtual contact sensors with garage door states (open/closed).  
 - *Note: Python dameon code not provided for raspberry pi.*
+
 ### Open Door Sensor SmartApp
 - Reports on doors with contact sesnors that are left open for a specified period of time.
+
 ### Button Controller {Legacy} SmartApp
 - Works with multiple Minimote devices using child apps
+
 ### Alarm Panel Monitor
 - Works with Vista/Honeywell Alarms
+
 ### Alarmdecoder SmartApp
 - Provides integration with Alarm Decoder hardware
+
 ### BWA Device Type Handler
 - Provides cloud connected status of a Balboa Model 20p WiFi connected Hot Tub 
+
 ### RestServer Device Type Handler
 - Provides Ping Response from a local network REST API Webserver
