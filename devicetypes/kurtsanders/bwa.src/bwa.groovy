@@ -17,7 +17,6 @@ import java.text.SimpleDateFormat;
 
 def redColor 		= "#FF0000"
 def redColor4		= "#ffCCCC"
-
 def greenColor 		= "#008000"
 def whiteColor 		= "#FFFFFF"
 def yellowColor 	= "#FFFF00"
@@ -35,19 +34,29 @@ metadata {
         capability "Temperature Measurement"
         capability "Thermostat"
         capability "Refresh"
+        capability "Switch Level"
+        
+        attribute "tubStatus", "string"
 
-/*
-        capability "Actuator"
-        attribute "spaSetTemp"  ,   "string"
-        attribute "heatMode"  	,  	"enum"	, ["Off", "On"]
-        attribute "spaPump1"  	,  	"enum"	, ["Off", "Low", "High"]
-        attribute "spaPump2"	,  	"enum"	, ["Off", "Low", "High"]
-        attribute "modeState"	, 	"enum"	, ["Rest", "Ready", "Rest/Ready", "Off"]
-*/
         command "setHotTubStatus"
-        command "slider"
+        command "restMode"
     }
     tiles(scale: 2) {
+        // Current Temperature Reading
+        multiAttributeTile(name:"temperature", type:"generic", width:6, height:3, canChangeIcon: false) {
+            tileAttribute("device.temperature", key: "PRIMARY_CONTROL") {
+                attributeState("default",label:'${currentValue}º',
+                               backgroundColors:[
+                                   [value: 0,   color: whiteColor],
+                                   [value: 50,  color: navyColor],
+                                   [value: 90,  color: blueColor],
+                                   [value: 104, color: redColor]
+                               ])
+            }
+            tileAttribute("tubStatus", key: "SECONDARY_CONTROL") {
+                attributeState("tubStatus", label:'${currentValue}', defaultState: true)
+            }
+        }
         // Hot Tub Turn On/Off
         standardTile("switch", "device.switch",  width: 2, height: 2, canChangeIcon: true) {
             state "on", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:greenColor	, nextState:"turningOff"
@@ -55,21 +64,8 @@ metadata {
             state "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:yellowColor	, nextState:"turningOff"
             state "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:yellowColor , nextState:"turningOn"
         }
-
-        // Current Temperature Reading
-        valueTile("temperature", "device.temperature", width: 2, height: 2) {
-            state("temperature", label:'${currentValue}°F', unit:"°F",
-                  backgroundColors:[
-                      [value: 0,  color: whiteColor],
-                      [value: 50,  color: navyColor],
-                      [value: 95,  color: blueColor],
-                      [value: 96, color: redColor4],
-                      [value: 104, color: redColor]
-                  ]
-                 )
-        }
         // LED Lights
-        standardTile("light", "device.light",  width: 2, height: 2, canChangeIcon: true) {
+        standardTile("light", "device.light",  width: 1, height: 1, canChangeIcon: true) {
             state "on", label:'Lights ${name}', icon:"st.Lighting.light11", backgroundColor:greenColor	, nextState:"turningOff"
             state "off", label:'Lights ${name}', icon:"st.Lighting.light13", backgroundColor:whiteColor	, nextState:"turningOn"
             state "turningOn", label:'${name}', icon:"st.Lighting.light11", backgroundColor:yellowColor	, nextState:"turningOff"
@@ -85,13 +81,13 @@ metadata {
                 backgroundColor:"#18BA02"
         }
         // Descriptive Text
-        valueTile("statusText", "statusText", width: 2, height: 2) {
+        valueTile("statusText", "statusText", width: 3, height: 1) {
             state "statusText", label: '${currentValue}', backgroundColor:whiteColor, defaultState: true
         }
-        valueTile("schedule", "schedule", width: 2, height: 2) {
-            state "schedule", label: 'Refresh\nSchedule\n${currentValue} min(s)', backgroundColor:whiteColor, defaultState: true
+        valueTile("schedule", "schedule", decoration: "flat", width: 3, height: 1) {
+            state "schedule", label: 'Refresh Schedule\n${currentValue} min(s)', backgroundColor:whiteColor, defaultState: true
         }
-        standardTile("spaPump1", "spaPump1", inactiveLabel: false, decoration: "flat", width: 2, height: 2,) {
+        standardTile("spaPump1", "spaPump1", inactiveLabel: false, decoration: "flat", width: 1, height: 1,) {
             state "Low", label: 'Jet1 Low',
                 icon: "st.valves.water.open", backgroundColor: greenColor
             state "High", label: 'Jet1 High',
@@ -99,7 +95,7 @@ metadata {
             state "Off", label: 'Jet1 Off',
                 icon: "st.valves.water.closed", backgroundColor: whiteColor
         }
-        standardTile("spaPump2", "spaPump2", inactiveLabel: false, decoration: "flat", width: 2, height: 2,) {
+        standardTile("spaPump2", "spaPump2", inactiveLabel: false, decoration: "flat", width: 1, height: 1,) {
             state "Low", label: 'Jet2 Low',
                 icon: "st.valves.water.open", backgroundColor: greenColor
             state "High", label: 'Jet2 High',
@@ -118,46 +114,51 @@ metadata {
             state "Off", label: '${currentValue}',
                 icon: "st.Kids.kids20", backgroundColor: whiteColor
         }
-        valueTile("heatingSetpoint", "device.heatingSetpoint", width: 2, height: 2) {
-            state("heatingSetpoint", label:'Set Temp\n${currentValue}°F')
+        valueTile("heatingSetpoint", "device.heatingSetpoint",  width: 3, height: 1) {
+            state("heatingSetpoint", label:'Set Temp: ${currentValue}°F', 
+                backgroundColors:[
+                    [value: 0,   color: whiteColor],
+                    [value: 50,  color: navyColor],
+                    [value: 90,  color: blueColor],
+                    [value: 104, color: redColor]
+                ]
+            )
         }
-        standardTile("thermostatOperatingState", "device.thermostatOperatingState", decoration: "flat", width: 2, height: 2) {
+        controlTile("levelSliderControl", "device.level", "slider", height: 1, width: 3, inactiveLabel: false, range:"(50..104)") {
+            state "level", action:"setLevel" 
+        }
+        standardTile("thermostatOperatingState", "device.thermostatOperatingState", decoration: "flat", width: 1, height: 1) {
             state "idle", label:'${name}',
                 icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/idle.png"
             state "heating", label:'${name}',
                 icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heating.png"
         }
-        standardTile("thermostatMode", "device.thermostatMode", decoration: "flat", width: 2, height: 2,) {
+        standardTile("thermostatMode", "device.thermostatMode", decoration: "flat", width: 1, height: 1,) {
             state "off",  label: 'Heat Off', icon: "st.Outdoor.outdoor19"
             state "heat", label: 'Heat On',
                 icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heatMode.png"
         }
-        standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+        standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
             state "default", label: 'Refresh', action:"refresh.refresh", icon:"st.secondary.refresh"
         }
-        controlTile("levelSliderControl", "device.level", "slider", height: 2,
-                    width: 4, inactiveLabel: false, range:"(0..10)") {
-            state "level", action:"slider"
-    }
-
-        main(["switch"])
+        main(["temperature"])
         details(
             [
-                "switch",
                 "temperature",
+                "switch",
+                "modeState",
                 "contact",
                 "outlet",
                 "light",
-                "modeState",
                 "thermostatOperatingState",
                 "thermostatMode",
                 "spaPump1",
                 "spaPump2",
                 "heatingSetpoint",
-                "refresh",
+                "levelSliderControl",
                 "statusText",
                 "schedule",
-                "levelSliderControl"
+                "refresh"
             ]
         )
     }
@@ -192,36 +193,42 @@ def installed() {
 }
 
 def parse(String description) {
-	// This is a simulated device. No incoming data to parse.
-	log.debug "parse: Begin..."
+    // This is a simulated device. No incoming data to parse.
+    log.debug "parse: Begin..."
     log.debug "description: $description"
-	log.debug "parse: End..."
+    log.debug "parse: End..."
 }
 
-def slider(setLevel) {
-	log.debug "setLevel: ${setLevel}"
+def setLevel(int val) {
+    log.info "Started: --- handler.setLevel"
+    log.debug "val: ${val}"
+    sendEvent("name":"level", "value":val, "isStateChange":true, displayed:true)
+    sendEvent("name":"heatingSetpoint", "value":val, "isStateChange":true, displayed:true)
 }
-
 
 def on() {
-	log.trace "HotTub: Turning On"
-	sendEvent(name: "switch", value: "on")
+    log.trace "HotTub: Turning On"
+    sendEvent(name: "switch", value: "on")
 }
 
 def off() {
-	log.trace "HotTub Turning Off"
-	sendEvent(name: "switch", value: "off")
+    log.trace "HotTub Turning Off"
+    sendEvent(name: "switch", value: "off")
 }
 
 def setHotTubStatus(params) {
     log.debug "params: ${params}"
     def quietBool = true
     for ( e in params ) {
-        log.info "key = ${e.key}, value = ${e.value}"
+//        log.info "key = ${e.key}, value = ${e.value}"
         quietBool = true
         if (e.key=="statusText") {
             quietBool = false
         }
+        else if (e.key=="heatingSetpoint") {
+            sendEvent(name: "level", value: e.value)        
+        }
         sendEvent(name: "${e.key}", value: "${e.value}", displayed: quietBool)
     }
+    sendEvent(name: "tubStatus", value: "${params.modeState} - ${params.thermostatOperatingState.capitalize()} - ${params.heatingSetpoint}ºF", displayed: false)
 }
