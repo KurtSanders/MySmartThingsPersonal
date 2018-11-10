@@ -38,10 +38,12 @@
 - Provides integration with Alarm Decoder hardware
 
 ### BWA Device Type Handler (DTH)
-- Provides cloud connected status of a Balboa Model 20p WiFi connected Hot Tub 
+- Provides cloud connected status of a Balboa Model 20p WiFi connected Hot Tub.  
+- Requires my companion SmartApp which is currently available to the public. 
 
 ### RestServer Device Type Handler (DTH)
-- Provides Ping Response from a local network REST API Webserver
+- Provides Ping Response from a local network REST API Webserver.  
+- Code for the restAPI Webserver is not public
 
 ### My MimoLite Device Handler (DTH)
 - Provides for the dual capabailities (switch/sensor) of the MimoLite device
