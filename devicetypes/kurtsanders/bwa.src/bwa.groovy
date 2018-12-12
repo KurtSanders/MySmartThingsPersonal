@@ -41,13 +41,19 @@ metadata {
         
         attribute "tubStatus", "string"
         attribute "statusText", "string"
-        attribute "schedulerFreq", "string"
-        attribute "spaPump1", "string"
-        attribute "spaPump2", "string"
-        attribute "modeState", "string"        
+        attribute "schedulerFreq", "enum", ['0','1','5','10','15','30','60','180']
+        attribute "spaPump1", "enum", ['Low','High','Off']
+        attribute "spaPump2", "enum", ['Low','High','Off']
+        attribute "heatMode", "enum", ['Rest','Ready/Rest','Ready']
 
-        command "setHotTubStatus"
-        command "restMode"
+        command "heatModeRest"
+        command "heatModeReady"
+        command "spaPump1Low"
+        command "spaPump1High"
+        command "spaPump1Off"
+        command "spaPump2Low"
+        command "spaPump2High"
+        command "spaPump2Off"
     }
     tiles(scale: 2) {
         // Current Temperature Reading
@@ -86,7 +92,7 @@ metadata {
             state "heat", label: 'Heat On',
                 icon: "https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/devicetypes/kurtsanders/bwa.src/icons/heatMode.png"
         }
-        // Hot Tub Turn On/Off
+        // Hot Tub Turn Power On/Off
         standardTile("switch", "device.switch",  width: 2, height: 2, canChangeIcon: true) {
             state "off", label:'Off', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:"#ffffff", nextState:"turningOn"
             state "on", label:'On', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:"#00a0dc", nextState:"turningOff"
@@ -110,31 +116,26 @@ metadata {
                 backgroundColor:greenColor
         }
         standardTile("spaPump1", "spaPump1", inactiveLabel: false, decoration: "flat", width: 2, height: 1,) {
-            state "Low", label: 'Jet1 Low',
+            state "Low", label: 'Jet1 Low', action:"spaPump1High", 
                 icon: "st.valves.water.open", backgroundColor: greenColor
-            state "High", label: 'Jet1 High',
+            state "High", label: 'Jet1 High', action:"spaPump1Off", 
                 icon: "st.valves.water.open", backgroundColor: blueColor
-            state "Off", label: 'Jet1 Off',
+            state "Off", label: 'Jet1 Off', action:"spaPump1Low", 
                 icon: "st.valves.water.closed", backgroundColor: whiteColor
         }
         standardTile("spaPump2", "spaPump2", inactiveLabel: false, decoration: "flat", width: 2, height: 1,) {
-            state "Low", label: 'Jet2 Low',
+            state "Low", label: 'Jet2 Low', action:"spaPump2High", 
                 icon: "st.valves.water.open", backgroundColor: greenColor
-            state "High", label: 'Jet2 High',
+            state "High", label: 'Jet2 High', action:"spaPump2Off", 
                 icon: "st.valves.water.open", backgroundColor: blueColor
-            state "Off", label: 'Jet2 Off',
+            state "Off", label: 'Jet2 Off', action:"spaPump2Low", 
                 icon: "st.valves.water.closed", backgroundColor: whiteColor
         }
-        standardTile("modeState", "modeState", inactiveLabel: false,
-                     decoration: "flat", width: 2, height: 2,) {
-            state "Rest", label: '${currentValue}',
-                icon: "st.Kids.kids20", backgroundColor: whiteColor
-            state "Ready", label: '${currentValue}',
-                icon: "st.Kids.kids20", backgroundColor: greenColor
-            state "Ready/Rest", label: '${currentValue}',
-                icon: "st.Kids.kids20", backgroundColor: blueColor
-            state "Off", label: '${currentValue}',
-                icon: "st.Kids.kids20", backgroundColor: whiteColor
+        // Hot Tub Heat Mode On/Off
+        standardTile("heatMode", "heatMode", inactiveLabel: false, width: 2, height: 2,) {
+            state "Ready", 		label:'Ready', 	action:"heatModeRest", 	icon:"st.Kids.kids20", 	backgroundColor:"#ffffff", nextState:"Rest"
+            state "Ready/Rest", label:'Ready', 	action:"heatModeRest", 	icon:"st.Kids.kids20", 	backgroundColor:"#ffffff", nextState:"Rest"
+            state "Rest", 		label:'Rest', 	action:"heatModeReady", icon:"st.Kids.kids20", 	backgroundColor:"#00a0dc", nextState:"Ready"
         }
         // Descriptive Text
         valueTile("statusText", "statusText", decoration: "flat", width: 3, height: 1, wordWrap: true) {
@@ -156,7 +157,7 @@ metadata {
                     [value: '180',  color: "#ff69b4"]
                 ]
         }
-        standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 3, height: 1) {
+        standardTile("refresh", "refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 1) {
             state "default", label: 'Refresh', action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         main(["temperature"])
@@ -164,7 +165,7 @@ metadata {
             [
                 "temperature",
                 "switch",
-                "modeState",
+                "heatMode",
                 "contact",
                 "light",
                 "thermostatOperatingState",
@@ -193,13 +194,43 @@ def installed() {
 	log.debug "BWA Installed: Begin..."
 	log.debug "BWA Installed: End..."
 }
-
 def on() {
     log.trace "HotTub: Turning On"
     parent.tubAction('switch', 'on')
 }
-
 def off() {
     log.trace "HotTub Turning Off"
     parent.tubAction('switch', 'off')
+}
+def heatModeReady() {
+    log.trace "HotTub: Turning HeatMode Ready"
+    parent.tubAction('heatMode', 'Ready')
+}
+def heatModeRest() {
+    log.trace "HotTub Turning HeatMode Rest"
+    parent.tubAction('heatMode', 'Rest')
+}
+def spaPump1Low() {
+    log.trace "HotTub Turning spaPump1 Low"
+    parent.tubAction('spaPump1', 'Low')
+}
+def spaPump1High() {
+    log.trace "HotTub Turning spaPump1 High"
+    parent.tubAction('spaPump1', 'High')
+}
+def spaPump1Off() {
+    log.trace "HotTub Turning spaPump1 Off"
+    parent.tubAction('spaPump1', 'Off')
+}
+def spaPump2Low() {
+    log.trace "HotTub Turning spaPump2 Low"
+    parent.tubAction('spaPump2', 'Low')
+}
+def spaPump2High() {
+    log.trace "HotTub Turning spaPump2 High"
+    parent.tubAction('spaPump2', 'High')
+}
+def spaPump2Off() {
+    log.trace "HotTub Turning spaPump2 Off"
+    parent.tubAction('spaPump2', 'Off')
 }

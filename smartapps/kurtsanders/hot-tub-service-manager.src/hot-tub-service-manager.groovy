@@ -232,6 +232,30 @@ def tubAction(feature, command) {
             infoVerbose("Hot Tub '${feature.toUpperCase()}' already '${d.switchState.value.toUpperCase()}'")     
         }
         break
+        case 'heatMode':
+        if (state.heatMode!=command) {
+            infoVerbose("Turning Heat '${feature.toUpperCase()}' from '${state.heatMode.toUpperCase()}' to '${command.toUpperCase()}'")
+            d.sendEvent(name: "${feature}", value: "${command}")
+        } else {
+            infoVerbose("Hot Tub '${feature.toUpperCase()}' already '${state.heatMode.toUpperCase()}'")     
+        }
+        break
+        case 'spaPump1':
+        if (state.spaPump1!=command) {
+            infoVerbose("Turning '${feature.toUpperCase()}' from '${state.spaPump1.toUpperCase()}' to '${command.toUpperCase()}'")
+            d.sendEvent(name: "${feature}", value: "${command}")
+        } else {
+            infoVerbose("Hot Tub '${feature.toUpperCase()}' already '${state.spaPump1.toUpperCase()}'")     
+        }
+        break
+        case 'spaPump2':
+        if (state.spaPump2!=command) {
+            infoVerbose("Turning '${feature.toUpperCase()}' from '${state.spaPump2.toUpperCase()}' to '${command.toUpperCase()}'")
+            d.sendEvent(name: "${feature}", value: "${command}")
+        } else {
+            infoVerbose("Hot Tub '${feature.toUpperCase()}' already '${state.spaPump2.toUpperCase()}'")     
+        }
+        break
         default :
         infoVerbose("default tubAction action for ${feature} ${command}")
     }
@@ -273,7 +297,7 @@ def updateDeviceStates() {
     d.sendEvent(name: "temperature", value: state.temperature, displayed: true)
     d.sendEvent(name: "contact",   	value: state.contact, displayed: true)
     d.sendEvent(name: "switch",    	value: state.switch, displayed: true)
-    d.sendEvent(name: "modeState", 	value: state.modeState, displayed: true)
+    d.sendEvent(name: "heatMode", 	value: state.heatMode, displayed: true)
     d.sendEvent(name: "contact", 	value: state.contact, displayed: true)
     d.sendEvent(name: "light", value: state.light, displayed: true)
     d.sendEvent(name: "thermostatOperatingState", value: state.thermostatOperatingState, displayed: true)
@@ -283,7 +307,7 @@ def updateDeviceStates() {
     d.sendEvent(name: "heatingSetpoint", value: state.heatingSetpoint, displayed: true)
     d.sendEvent(name: "statusText", value: "${state.statusText}", displayed: false)
     d.sendEvent(name: "schedulerFreq", value: "${state.schedulerFreq}", displayed: false)
-    d.sendEvent(name: "tubStatus", value: "${state.modeState} - ${state.thermostatOperatingState.capitalize()} to ${state.heatingSetpoint}ºF on ${timeString}", displayed: false)
+    d.sendEvent(name: "tubStatus", value: "${state.heatMode} - ${state.thermostatOperatingState.capitalize()} to ${state.heatingSetpoint}ºF on ${timeString}", displayed: false)
     infoVerbose("End: updateDeviceStates-------------")
 }
 
@@ -372,7 +396,7 @@ def decodeHotTubB64Data(byte[] d) {
     //  Hot Tub Mode State
     offset = 9
     def modeStateDecodeArray = ["Ready","Rest","Ready/Rest"]
-	state.modeState = modeStateDecodeArray[B64decoded[offset]]
+    state.heatMode = modeStateDecodeArray[B64decoded[offset]]
     //	Hot Tub Pump1 and Pump2 Status
     offset = 15
     def pumpDecodeArray = []
@@ -601,6 +625,6 @@ def getDevId() {
 
     return
 }
-def errorVerbose(String[] message) {if (errorVerbose){log.info "${message}"}}
-def debugVerbose(String[] message) {if (debugVerbose){log.info "${message}"}}
-def infoVerbose(String[] message)   {if (infoVerbose){log.info "${message}"}}
+def errorVerbose(String message) {if (errorVerbose){log.info "${message}"}}
+def debugVerbose(String message) {if (debugVerbose){log.info "${message}"}}
+def infoVerbose(String message)  {if (infoVerbose){log.info "${message}"}}
