@@ -50,7 +50,10 @@
 
 ## My Google Chrome Applications
 
-### Reload all Browser Tabs Except (Chrome Extension)
+### Reload all Browser Tabs Except (Chrome Extension) 
+
+[Link to Repository](https://github.com/KurtSanders/MySmartThingsPersonal/tree/master/Chrome/reload-all-tabs-except)
+
 - This Google Chrome extension reloads or refreshes all tabs except those Tabs that match a user defined keyword URL list.
 - Features
 	- Quick keyboard shortcut (alt+shift+r) which can be customizable.
