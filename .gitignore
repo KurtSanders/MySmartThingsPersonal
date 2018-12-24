@@ -1,3 +1,4 @@
 .DS_Store
 reload-all-tabs-except.crx
 reload-all-tabs-except.pem
+*.crx
