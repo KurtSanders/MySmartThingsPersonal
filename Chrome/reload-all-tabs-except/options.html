@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Reload All Tabs Options</title>
+  <title>Reload All Tabs Except Options</title>
   <link href="/css/options.css" rel="stylesheet" type="text/css" />
   <script src="/js/functions.js" type="text/javascript"></script>
   <script src="/js/options.js" type="text/javascript"></script>
@@ -11,7 +11,7 @@
     <div id="header">
       <h1>Reload All Tabs Except<em id="version"></em></h1>
     </div>
-    Author: Kurt Sanders<p>
+    Author: SanderSoft<p>
     <H2>Make sure you <u>save the settings</u> and the bottom of the page after your done editing!</H2>
     <div class="extension-template">
       <div class="extension-header">Browser Action</div>
@@ -27,7 +27,7 @@
     <div class="extension-template">
       <div class="extension-header">Refresh All Tab's URLs Except - Matching Keyword List</div>
       <div class="extension-options">
-        <p>Refresh all browser tab(s) except those tabs that match any/all of these URL keywords (Separate keywords by a comma ',' )<br>
+        <p>Refresh all browser tab(s) except those tabs that match any/all of these URL base keywords (Separate keywords by a comma ',' )<br>
         Example: webcore,news.google,actiontiles</p>
         <dl>
           <dt>Enter case sensitive keywords:</dt>
@@ -38,20 +38,21 @@
     <div class="extension-template">
       <div class="extension-header">Context Menu (Right Click)</div>
       <div class="extension-options">
-        <p>When you have multiple checkboxes checked, it will place all context menus under one parent "Reload All Tabs" menu.</p>
-        <p>When you have just a single context menu selected, there will be no parent.</p>
+        <p>The default button click action is to refresh ALL tabs except those matching a keyword in the except list.</p>
+        <p>When you have selected multiple checkboxes below, those right click options will place all context menus under one parent "Reload All Tabs" menu.</p>
+        <p>When you have just a single context menu selected, there will be no parent in the right click option context menu.</p>
         <dl>
-          <dt>Reload all tabs in current window:</dt>
+          <dt>Reload ALL tabs in current window:</dt>
           <dd><input id="reloadWindow" type="checkbox" /></dd>
-          <dt>Reload all tabs in all windows:</dt>
+          <dt>Reload ALL tabs in ALL windows:</dt>
           <dd><input id="reloadAllWindows" type="checkbox" /></dd>
-          <dt>Reload only pinned tabs in current window:</dt>
+          <dt>Reload only PINNED tabs in current window:</dt>
           <dd><input id="reloadPinnedOnly" type="checkbox" /></dd>
-          <dt>Reload only unpinned tabs in current window:</dt>
+          <dt>Reload only UNPINNED tabs in current window:</dt>
           <dd><input id="reloadUnpinnedOnly" type="checkbox" /></dd>
-          <dt>Reload all tabs to the left:</dt>
+          <dt>Reload ALL tabs to the LEFT:</dt>
           <dd><input id="reloadAllLeft" type="checkbox" /></dd>
-          <dt>Reload all tabs to the right:</dt>
+          <dt>Reload ALL tabs to the RIGHT:</dt>
           <dd><input id="reloadAllRight" type="checkbox" /></dd>
         </dl>
       </div>

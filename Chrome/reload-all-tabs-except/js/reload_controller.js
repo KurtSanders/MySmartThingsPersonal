@@ -160,9 +160,8 @@ ReloadController.prototype.updateContextMenu = function () {
   if (this.cachedSettings.reloadWindow) {
     chrome.contextMenus.create({
       id: 'reloadWindow',
-      type: 'checkbox',
-      checked: true,
-      title: 'Reload this window',
+      type: 'normal',
+      title: 'Reload THIS window',
       contexts: ['all']
     })
   }
@@ -170,9 +169,8 @@ ReloadController.prototype.updateContextMenu = function () {
   if (this.cachedSettings.reloadAllWindows) {
     chrome.contextMenus.create({
       id: 'reloadAllWindows',
-      type: 'checkbox',
-      checked: true,
-      title: 'Reload all windows',
+      type: 'normal',
+      title: 'Reload ALL windows',
       contexts: ['all']
     })
   }
@@ -180,9 +178,8 @@ ReloadController.prototype.updateContextMenu = function () {
   if (this.cachedSettings.reloadPinnedOnly) {
     chrome.contextMenus.create({
       id: 'reloadPinnedOnly',
-      type: 'checkbox',
-      checked: true,
-      title: 'Reload pinned tabs',
+      type: 'normal',
+      title: 'Reload PINNED tabs',
       contexts: ['all']
     })
   }
@@ -190,9 +187,8 @@ ReloadController.prototype.updateContextMenu = function () {
   if (this.cachedSettings.reloadUnpinnedOnly) {
     chrome.contextMenus.create({
       id: 'reloadUnpinnedOnly',
-      type: 'checkbox',
-      checked: true,
-      title: 'Reload unpinned tabs',
+      type: 'normal',
+      title: 'Reload UNPINNED tabs',
       contexts: ['all']
     })
   }
@@ -200,9 +196,8 @@ ReloadController.prototype.updateContextMenu = function () {
   if (this.cachedSettings.reloadAllLeft) {
     chrome.contextMenus.create({
       id: 'reloadAllLeft',
-      type: 'checkbox',
-      checked: true,
-      title: 'Reload all tabs to the left',
+      type: 'normal',
+      title: 'Reload ALL tabs to the LEFT',
       contexts: ['all']
     })
   }
@@ -210,9 +205,8 @@ ReloadController.prototype.updateContextMenu = function () {
   if (this.cachedSettings.reloadAllRight) {
     chrome.contextMenus.create({
       id: 'reloadAllRight',
-      type: 'checkbox',
-      checked: true,
-      title: 'Reload all tabs to the right',
+      type: 'normal',
+      title: 'Reload ALL tabs to the RIGHT',
       contexts: ['all']
     })
   }
@@ -227,16 +221,27 @@ ReloadController.prototype.updateContextMenu = function () {
   chrome.contextMenus.create({
     type: "normal",
     id: "ExceptKeywords",
-    title: `Except Keywords: ${this.cachedSettings.reloadURLExclude}`,
+    title: `Except Keywords Defined: ${this.cachedSettings.reloadURLExclude.split(",").length}`,
     parentId: "subMenu",
     checked: false,
     contexts: ["all"]
   })
+  
+  for (var i = 0; i < this.cachedSettings.reloadURLExclude.split(",").length;i++) {
+    chrome.contextMenus.create({
+    type: "normal",
+    id: `keyword-${i}-${Math.floor(Math.random() * 1000)}`,
+    title: `${i}) ${this.cachedSettings.reloadURLExclude.split(",")[i]}`,
+    parentId: "ExceptKeywords",
+    checked: false,
+    contexts: ["all"]
+  })
+  }
 
   chrome.contextMenus.create({
     type: "normal",
     id: "separator",
-    title: "======== URL's Matching Except Keywords ========",
+    title: "======== URL's Matching Any Except Keywords by Tab # ========",
     parentId: "subMenu",
     checked: false,
     contexts: ["all"]
@@ -248,7 +253,7 @@ ReloadController.prototype.updateContextMenu = function () {
       var excludeURLBool = containsAny(baseURL, excludeKeys)
       chrome.contextMenus.create({
         type: "checkbox",
-        id: `Match-${i}`,
+        id: `Tab-${i}-${Math.floor(Math.random() * 1000)}`,
         title: `${tabs[i].index}) ${baseURL} ${tabs[i].pinned?'(Pinned Tab)':''}`,
         parentId: "subMenu",
         checked: excludeURLBool,
@@ -337,7 +342,7 @@ ReloadController.prototype.reloadStrategy = function(tab, strategy, options = {}
       webCoreTabs += 1
       chrome.browserAction.setBadgeText ( { text: webCoreTabs.toString() } )
     } else {
-//      chrome.tabs.update(tab.id, {url: tab.url, selected: tab.selected}, null)
+      chrome.tabs.update(tab.id, {url: tab.url, selected: tab.selected}, null)
     }
   }
 }
