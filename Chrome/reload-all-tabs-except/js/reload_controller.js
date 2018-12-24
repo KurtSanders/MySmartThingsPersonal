@@ -55,7 +55,7 @@ ReloadController = function()
     this.cachedSettings.reloadAllLeft = settings.reloadAllLeft == true
     this.cachedSettings.shortcutKeyCode = (typeof settings.shortcutKeyCode == 'undefined') ? 82 : settings.shortcutKeyCode
     this.cachedSettings.shortcutKeyShift = (typeof settings.shortcutKeyShift == 'undefined') ? true : (settings.shortcutKeyShift == true)
-  
+
     excludeKeys = this.cachedSettings.reloadURLExclude.split(',')
     // Update initial context menu.
     this.updateContextMenu()
@@ -274,6 +274,7 @@ ReloadController.prototype.onInstall = function()
  */
 ReloadController.prototype.reloadWindow = function(win, options = {})
 {
+  webCoreTabs = 0
   chrome.tabs.getAllInWindow(win.id, (tabs) => {
     let strategy = {}
     for (var i in tabs) {
@@ -304,7 +305,7 @@ ReloadController.prototype.reloadStrategy = function(tab, strategy, options = {}
       issueReload = false
     }
   }
-  
+
   if (options.reloadAllRight) {
     if (!strategy.reset) {
       if (!tab.active) {
@@ -314,7 +315,7 @@ ReloadController.prototype.reloadStrategy = function(tab, strategy, options = {}
         strategy.reset = true
       }
     }
-    
+
     if (strategy.stop) {
       issueReload = false
       if (strategy.reset) {
@@ -326,19 +327,17 @@ ReloadController.prototype.reloadStrategy = function(tab, strategy, options = {}
   if (issueReload) {
     var baseURL = tab.url.split('/')[2];
     var excludeURLBool = containsAny(baseURL, excludeKeys)
-    var msg = `${baseURL} Skip Refresh:${excludeURLBool?'YES':'NO'} Pinned Tab:${tab.pinned?'YES':'NO'}`
     if (tab.index == 0) {
-      console.log(`Refresh Exclude Search Keys = ${excludeKeys}`)
+      console.log(`%c Refresh Exclude Search Keys = "${excludeKeys}"`, 'color: red')
       console.log(`============================================`)
     }
-    console.log(`${tab.index}) ${msg}`)
+    console.log(`${tab.index}) %c ${baseURL} %c Refresh:${excludeURLBool?'NO':'YES'} %c ${tab.pinned?'Pinned Tab':''}`,
+    'color:blue', 'color:purple', 'color:green')
     if (excludeURLBool) {
-      console.log(`${tab.index}) Skipping Refresh ${msg}`)
       webCoreTabs += 1
-        chrome.browserAction.setBadgeText ( { text: webCoreTabs.toString() } )
+      chrome.browserAction.setBadgeText ( { text: webCoreTabs.toString() } )
     } else {
-      console.log(`${tab.index}) Reloading Tab ${msg}`)
-      chrome.tabs.update(tab.id, {url: tab.url, selected: tab.selected}, null)
+//      chrome.tabs.update(tab.id, {url: tab.url, selected: tab.selected}, null)
     }
   }
 }
