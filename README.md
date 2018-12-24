@@ -5,7 +5,7 @@
 ## My SmartThings Applications
 
 ### Garage Door Virtual Contact Sensor SmartApp and Device Handler (DTH)
-- Eliminates the need for using physical zwave sensors attached to MyQ controlled garage doors
+- Eliminates the need for using physical z-wave sensors attached to MyQ controlled garage doors
 - Works in concert with [MQ Lite SmartApp](https://github.com/brbeaird/SmartThings_MyQ)
 - The DTH works with your customized code which needs to: 
 	- Poll an e-mail account for targeted emails from [Sears Craftsman Assurelink Website](https://assurelink.craftsman.com/) concerning your MyQ controlled garage door activity states (ie. open/close).  
@@ -23,10 +23,10 @@
 		* Connect each IFTTT applet you created to the named virtual contact sensor for the garage door. 
 		* No custom SmartApp or DTH needed.
 		* No server or coding
-		* No polling MyQ (Response times from IFTTT to SmartThings to trigger open/close states is slightly delayed based on email poll throttleing from IFTTT.		  
+		* No polling MyQ (Response times from IFTTT to SmartThings to trigger open/close states is slightly delayed based on email poll throttling from IFTTT.		  
 
 ### Open Door Sensor SmartApp
-- Reports on doors with contact sesnors that are left open for a specified period of time.
+- Reports on doors with contact sensors that are left open for a specified period of time.
 
 ### Button Controller {Legacy} SmartApp
 - Works with multiple Minimote devices using child apps
@@ -46,4 +46,14 @@
 - Code for the restAPI Webserver is not public
 
 ### My MimoLite Device Handler (DTH)
-- Provides for the dual capabailities (switch/sensor) of the MimoLite device
+- Provides for the dual capabilities (switch/sensor) of the MimoLite device
+
+## My Google Chrome Applications
+
+### Reload all Browser Tabs Except (Chrome Extension)
+- This Google Chrome extension reloads or refreshes all tabs except those Tabs that match a user defined keyword URL list.
+- Features
+	- Quick keyboard shortcut (alt+shift+r) which can be customizable.
+	- Browser Action to have a refresh button on the toolbar. You can hide it if you don't want it.
+	- You can choose to reload all tabs from the context menu except for those tabs that are excluded because they match a URL base keyword.
+	- You can customize the preference whether to refresh all windows, pinned tabs or just the current one, as well as all tabs to the right or left.

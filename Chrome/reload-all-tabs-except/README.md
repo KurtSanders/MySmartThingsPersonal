@@ -1,6 +1,6 @@
 # Reload all Tabs Except
 
-This Google Chrome extension reloads or refreshes all tabs except those who match a keyword URL list.
+This Google Chrome extension reloads/refreshes all Chrome browser tabs except tabs where their base URL's match a user defined comma delimited keyword URL list.  
 
 ## Features
 
@@ -13,7 +13,7 @@ This Google Chrome extension reloads or refreshes all tabs except those who matc
 
 ## Download and Install
 
-Download this application as a.zip file and unzip it to a local directory.  Load this as a local Chrome extension from the Chrome extensions page in developer mode.
+Download this application as a.zip file and unzip it to a local directory.  Load this as a local Chrome extension from the [Chrome extensions page](chrome://extensions/) in **Developer mode**.
 
 1. Open Chrome and go to Menu > Tools > Extensions.
 2. Click Developer mode > Load unpacked extensions...
@@ -26,11 +26,13 @@ Download this application as a.zip file and unzip it to a local directory.  Load
  - *Initial Designer:* [Eren Song](http://erensong.com)
   
  - *Updated:* Kurt Sanders 
-	1. Added excluded tab keyword list functionality
-	2. Added additional context menu status information
+	1. Added excluded base URL keyword list functionality to skip refreshing matched tabs
+	2. Added additional context menu status information (See below)
 	3. Updated selected depreciated API's
 	4. Changed Icons
-	5. Added badge count of tabs skipped from reload/refresh
+	5. Updated Readme documentation
+	5. Added a badge count of browser tabs skipped from reload/refresh
 
 ## Screenshots
-
+![](https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/Chrome/reload-all-tabs-except/screenshot/Screen%20Shot1.jpg)
+![](https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/Chrome/reload-all-tabs-except/screenshot/Screen%20Shot2.jpg)
