@@ -179,7 +179,7 @@ ReloadController.prototype.updateContextMenu = function () {
     chrome.contextMenus.create({
       id: 'reloadPinnedOnly',
       type: 'normal',
-      title: 'Reload PINNED tabs',
+      title: 'Reload ALL PINNED tabs',
       contexts: ['all']
     })
   }
@@ -188,7 +188,7 @@ ReloadController.prototype.updateContextMenu = function () {
     chrome.contextMenus.create({
       id: 'reloadUnpinnedOnly',
       type: 'normal',
-      title: 'Reload UNPINNED tabs',
+      title: 'Reload ALL UNPINNED tabs',
       contexts: ['all']
     })
   }
@@ -210,6 +210,13 @@ ReloadController.prototype.updateContextMenu = function () {
       contexts: ['all']
     })
   }
+
+  chrome.contextMenus.create({
+    type: "normal",
+    id: "datetime",
+    title: `Last Refresh: ${new Date().toLocaleString()}`,
+    contexts: ["all"]
+  })
 
   chrome.contextMenus.create({
     type: "normal",
