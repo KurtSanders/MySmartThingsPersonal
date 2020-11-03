@@ -1,6 +1,6 @@
 # SanderSoft SmartThings Repository
 
-![Kurt the Geek](https://raw.githubusercontent.com/KurtSanders/MySmartThingsPersonal/master/Geek.jpg)
+# This app is Unsupported by the devloper who now uses Hubitat.  The new SmartThings mobile client and platform is unreliable and buggy.
 
 ## My SmartThings Applications
 
